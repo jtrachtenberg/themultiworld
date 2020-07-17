@@ -2,9 +2,9 @@
 exports.up = function(knex) {
     return knex.schema.createTable('objects', function (t) {
         t.bigIncrements('objectId').unsigned().notNullable().primary()
-        t.bigInteger('userId').unsigned().notNullable()
+        t.bigInteger('userId').unsigned().nullable()
         t.foreign('userId').references('users.userId')
-        t.bigInteger('spaceId').unsigned().notNullable()
+        t.bigInteger('spaceId').unsigned().nullable()
         t.foreign('spaceId').references('spaces.spaceId')
         t.string('name').notNullable()
         t.text('description').nullable()
