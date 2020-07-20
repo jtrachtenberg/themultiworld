@@ -30,6 +30,18 @@ app.post('/addUser', (req, res) => {
         })
         .then((userId) => res.status(200).json(userId))
 })
+app.post('/updateUser', (req, res) => {
+    console.log(req.body)
+    store
+        .updateUser({
+            userId: req.body.userId,
+            userName: req.body.userName,
+            email: req.body.email,
+            description: req.body.desc,
+            isRoot: req.body.isRoot
+        })
+        .then((userId) => res.status(200).json(userId))
+})
 app.listen(7555, () => {
     console.log('Server running on localhost:7555')
 })

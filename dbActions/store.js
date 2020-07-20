@@ -12,5 +12,15 @@ module.exports = {
         return knex('users').insert({
             userName, email
         }).returning('userId')
+    },
+    updateUser({userId,userName,email,description,isRoot}) {
+        console.log(`update user ${userId} with email ${email}`)
+        return knex('users').where({userId: userId}).update({
+            userName: userName,
+            email: email,
+            description: description,
+            isRoot: isRoot,
+            updated_at: new Date()
+        }).returning('userId')
     }
 }
