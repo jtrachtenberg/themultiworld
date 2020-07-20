@@ -6,5 +6,11 @@ module.exports = {
         return knex('temp_item_table').insert({
             item1,item2
         })
+    },
+    addUser({userName,email}) {
+        console.log(`Add user ${userName} with email ${email}`)
+        return knex('users').insert({
+            userName, email
+        }).returning('userId')
     }
 }
