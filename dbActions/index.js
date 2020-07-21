@@ -42,6 +42,29 @@ app.post('/updateUser', (req, res) => {
         })
         .then((userId) => res.status(200).json(userId))
 })
+app.post('/addSpace', (req, res) => {
+    console.log(req.body)
+    store
+        .addSpace({
+            userId: req.body.userId,
+            title: req.body.title,
+            description: req.body.desc,
+            isRoot: req.body.isRoot
+        })
+        .then((spaceId) => res.status(200).json(spaceId))
+})
+app.post('/updateSpace', (req, res) => {
+    console.log(req.body)
+    store
+        .updateSpace({
+            spaceId: req.body.spaceId,
+            userId: req.body.userId,
+            title: req.body.title,
+            description: req.body.desc,
+            isRoot: req.body.isRoot
+        })
+        .then((spaceId) => res.status(200).json(spaceId))
+})
 app.listen(7555, () => {
     console.log('Server running on localhost:7555')
 })
