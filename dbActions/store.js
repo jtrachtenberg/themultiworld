@@ -23,6 +23,23 @@ module.exports = {
             updated_at: new Date()
         }).returning('userId')
     },
+    login({userName,email}) {
+        console.log(`login user ${userName} with email ${email}`)
+        let retUser
+        if (email !== null && email !== '')
+            retUser = knex('users').where({email: email}).on('query-response', (response, obj, builder) => {
+                retUser = response
+            })
+        else
+            retUser = knex('users').where({userName: userName}).on('query-response', (response, obj, builder) => {
+                retUser = obj.response[0]
+                console.log('obj')
+                console.log(obj.response[0])
+            })
+        
+        //console.log(retUser)
+        return retUser
+    },
     addSpace({userId,title,description,isRoot}) {
         console.log(`Add space ${title} with userId ${userId}`)
         var spaceId = knex('spaces').insert({

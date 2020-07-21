@@ -22,7 +22,6 @@ app.post('/create', (req, res) => {
         .then(() => res.sendStatus(200))
 })
 app.post('/addUser', (req, res) => {
-    console.log(req.body)
     store
         .addUser({
             userName: req.body.userName,
@@ -31,7 +30,6 @@ app.post('/addUser', (req, res) => {
         .then((userId) => res.status(200).json(userId))
 })
 app.post('/updateUser', (req, res) => {
-    console.log(req.body)
     store
         .updateUser({
             userId: req.body.userId,
@@ -43,7 +41,6 @@ app.post('/updateUser', (req, res) => {
         .then((userId) => res.status(200).json(userId))
 })
 app.post('/addSpace', (req, res) => {
-    console.log(req.body)
     store
         .addSpace({
             userId: req.body.userId,
@@ -53,8 +50,15 @@ app.post('/addSpace', (req, res) => {
         })
         .then((spaceId) => res.status(200).json(spaceId))
 })
+app.post('/loginUser', (req, res) => {
+    store
+        .login({
+            userName: req.body.userName,
+            email: req.body.email
+        })
+        .then((user) => res.status(200).json(user))
+})
 app.post('/updateSpace', (req, res) => {
-    console.log(req.body)
     store
         .updateSpace({
             spaceId: req.body.spaceId,
