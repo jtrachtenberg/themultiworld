@@ -25,7 +25,8 @@ app.post('/addUser', (req, res) => {
     store
         .addUser({
             userName: req.body.userName,
-            email: req.body.email
+            email: req.body.email,
+            password: req.body.password
         })
         .then((userId) => res.status(200).json(userId))
 })
@@ -35,10 +36,19 @@ app.post('/updateUser', (req, res) => {
             userId: req.body.userId,
             userName: req.body.userName,
             email: req.body.email,
-            description: req.body.desc,
+            description: req.body.description,
             isRoot: req.body.isRoot
         })
         .then((userId) => res.status(200).json(userId))
+})
+app.post('/loginUser', (req, res) => {
+    store
+        .login({
+            userName: req.body.userName,
+            email: req.body.email,
+            password: req.body.password
+        })
+        .then((user) => res.status(200).json(user))
 })
 app.post('/addSpace', (req, res) => {
     store
@@ -49,14 +59,6 @@ app.post('/addSpace', (req, res) => {
             isRoot: req.body.isRoot
         })
         .then((spaceId) => res.status(200).json(spaceId))
-})
-app.post('/loginUser', (req, res) => {
-    store
-        .login({
-            userName: req.body.userName,
-            email: req.body.email
-        })
-        .then((user) => res.status(200).json(user))
 })
 app.post('/updateSpace', (req, res) => {
     store
