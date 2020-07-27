@@ -55,7 +55,7 @@ app.post('/addSpace', (req, res) => {
         .addSpace({
             userId: req.body.userId,
             title: req.body.title,
-            description: req.body.desc,
+            description: req.body.description,
             isRoot: req.body.isRoot
         })
         .then((spaceId) => res.status(200).json(spaceId))
