@@ -12,7 +12,9 @@ app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
   });
-
+app.get('/', (req, res) => {
+    res.sendStatus(200)
+})
 app.post('/create', (req, res) => {
     store
         .create({
@@ -26,7 +28,8 @@ app.post('/addUser', (req, res) => {
         .addUser({
             userName: req.body.userName,
             email: req.body.email,
-            password: req.body.password
+            password: req.body.password,
+            stateData: req.body.stateData
         })
         .then((userId) => res.status(200).json(userId))
 })
@@ -71,6 +74,22 @@ app.post('/updateSpace', (req, res) => {
         })
         .then((spaceId) => res.status(200).json(spaceId))
 })
-app.listen(7555, () => {
+app.post('/loadSpaces', (req, res) => {
+    store
+        .loadSpaces({
+            userId: req.body.userId
+        })
+        .then((spaces) => res.status(200).json(spaces))
+})
+app.post('/loadPlace', (req, res) => {
+    store
+        .loadPlace({
+            placeId: req.body.placeId
+        })
+        .then((place) => res.status(200).json(place))
+})
+var server = app.listen(7555, () => {
     console.log('Server running on localhost:7555')
 })
+//Needed for Unit Testing
+module.exports = server

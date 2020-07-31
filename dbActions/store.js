@@ -8,14 +8,14 @@ module.exports = {
             item1,item2
         })
     },
-    addUser({userName,email,password}) {
+    addUser({userName,email,password,stateData}) {
         console.log(`Add user ${userName} with email ${email}`)
         const salt = crypto.randomBytes(16).toString('hex')
         const pw = knex.raw("sha2(concat(?,?),512)",[salt,password])
-        console.log(pw)
         const retVal = knex('users').insert({
             userName: userName,
             email: email,
+            stateData: stateData,
             salt: salt,
             password: pw
         })
@@ -34,7 +34,7 @@ module.exports = {
     },
     login({userName,email,password}) {
         console.log(`login user ${userName} with email ${email} and password ${password}`)
-        return knex('users').whereRaw('userName = ? AND sha2(concat(salt,?),512) = password',[userName,password]).first('userId','userName','email','description','isRoot')
+        return knex('users').whereRaw('userName = ? AND sha2(concat(salt,?),512) = password',[userName,password]).first('userId','userName','email','description','isRoot','stateData')
     },
     addSpace({userId,title,description,isRoot}) {
         console.log(`Add space ${title} with userId ${userId}`)
@@ -65,6 +65,12 @@ module.exports = {
             })
         }
         return retVal
+    },
+    loadSpaces({userId}) {
+        return knex('spaces').where({userId: userId}).select('spaceId','title','description')
+    },
+    loadPlace({placeId}) {
+        return knex('places').where({placeId: placeId}).select('title','description')
     }
 }
 
