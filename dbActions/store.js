@@ -33,8 +33,13 @@ module.exports = {
         }).returning('userId')
     },
     login({userName,email,password}) {
-        console.log(`login user ${userName} with email ${email} and password ${password}`)
-        return knex('users').whereRaw('userName = ? AND sha2(concat(salt,?),512) = password',[userName,password]).first('userId','userName','email','description','isRoot','stateData')
+        const columnCheck = (userName === null || userName.length === 0) ? 'email' : 'userName'
+        const checkVal = columnCheck === 'email' ? email : userName
+        console.log(`login ${columnCheck} with ${checkVal} and password ${password}`)
+        if (columnCheck === 'email')
+            return knex('users').whereRaw('email = ? AND sha2(concat(salt,?),512) = password',[checkVal,password]).first('userId','userName','email','description','isRoot','stateData')
+        else
+        return knex('users').whereRaw('userName = ? AND sha2(concat(salt,?),512) = password',[checkVal,password]).first('userId','userName','email','description','isRoot','stateData')
     },
     addSpace({userId,title,description,isRoot}) {
         console.log(`Add space ${title} with userId ${userId}`)
