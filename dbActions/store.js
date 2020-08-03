@@ -75,7 +75,7 @@ module.exports = {
         return knex('spaces').where({userId: userId}).select('spaceId','title','description')
     },
     loadPlace({placeId}) {
-        return knex('places').where({placeId: placeId}).select('title','description')
+        return knex('places').where({placeId: placeId}).select('placeId','title','description')
     }
 }
 
