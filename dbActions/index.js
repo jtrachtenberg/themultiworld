@@ -81,6 +81,16 @@ app.post('/loadSpaces', (req, res) => {
         })
         .then((spaces) => res.status(200).json(spaces))
 })
+app.post('/addPlace', (req, res) => {
+    store
+        .addPlace({
+            spaceId: req.body.spaceId,
+            title: req.body.title,
+            description: req.body.description,
+            isRoot: req.body.isRoot
+        })
+        .then((placeId) => res.status(200).json(placeId))
+})
 app.post('/loadPlace', (req, res) => {
     store
         .loadPlace({

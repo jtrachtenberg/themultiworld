@@ -54,6 +54,11 @@ module.exports = {
         }
         return spaceId
     },
+    addPlace({spaceId,title,description,isRoot}) {
+        return knex('places').insert({
+            spaceId,title,description,isRoot
+        }).returning('placeId')
+    },
     updateSpace({spaceId,userId,title,description,isRoot}) {
         console.log(`update space ${spaceId} with userId ${userId}`)
         var retVal = knex('spaces').where({spaceId: spaceId}).update({
