@@ -1,6 +1,7 @@
 const crypto = require('crypto')
 const knex = require('knex')(require('./knexfile'))
 
+var pos= require('pos')
 module.exports = {
     create({item1, item2}) {
         console.log(`Add item ${item1} and ${item2}`)
@@ -55,9 +56,21 @@ module.exports = {
         return spaceId
     },
     addPlace({spaceId,title,description,isRoot}) {
+        var words = new pos.Lexer().lex(description)
+        var tagger = new pos.Tagger()
+        var taggedWords = tagger.tag(words)
+        let poiArray = []
+        for (i in taggedWords) {
+            var taggedWord = taggedWords[i]
+            const tag = taggedWord[1]
+            console.log(tag)
+            if ( tag[0] === 'N' )
+                poiArray.push({word:taggedWord[0],tag:tag,description:'You see nothing special.'})
+        }
+        const poi = JSON.stringify(poiArray)
         return knex('places').insert({
-            spaceId,title,description,isRoot
-        }).returning('placeId')
+            spaceId,title,description,isRoot,poi
+        })
     },
     updateSpace({spaceId,userId,title,description,isRoot}) {
         console.log(`update space ${spaceId} with userId ${userId}`)
@@ -80,7 +93,7 @@ module.exports = {
         return knex('spaces').where({userId: userId}).select('spaceId','title','description')
     },
     loadPlace({placeId}) {
-        return knex('places').where({placeId: placeId}).select('placeId','title','description','exits')
+        return knex('places').where({placeId: placeId}).select('placeId','title','description','exits','poi','objects')
     }
 }
 
