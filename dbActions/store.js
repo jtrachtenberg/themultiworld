@@ -89,6 +89,20 @@ module.exports = {
         }
         return retVal
     },
+    updatePlace({spaceId,placeId,title,description,isRoot,exits,poi,objects}) {
+        exits = exits||[]
+        exits = JSON.stringify(exits)
+        var retVal = knex('places').where({placeId: placeId}).update({
+            title: title,
+            description: description,
+            isRoot: isRoot,
+            exits: exits,
+            poi: poi,
+            objects: objects,
+            updated_at: new Date()
+        }).returning('placeId')
+        return retVal
+    },
     loadSpaces({userId}) {
         return knex('spaces').where({userId: userId}).select('spaceId','title','description')
     },

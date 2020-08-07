@@ -98,6 +98,18 @@ app.post('/loadPlace', (req, res) => {
         })
         .then((place) => res.status(200).json(place))
 })
+app.post('/updatePlace', (req, res) => {
+    store   .updatePlace({
+        spaceId: req.body.spaceId,
+        placeId: req.body.placeId,
+        title: req.body.title,
+        description: req.body.description,
+        isRoot: req.body.isRoot,
+        exits: req.body.exits,
+        poi: JSON.stringify(req.body.poi),
+        objects: req.body.objects
+    }).then((place) => res.status(200).json(place))
+})
 var server = app.listen(7555, () => {
     console.log('Server running on localhost:7555')
 })
