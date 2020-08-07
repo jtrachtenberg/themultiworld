@@ -4,7 +4,7 @@ module.exports = {
       user: 'root',
       password: 'password',
       database: 'tmw',
-      debug: true,
+      debug: false,
       typeCast: function (field, next) {
         if (field.type === 'JSON') {
           return (JSON.parse(field.string()))

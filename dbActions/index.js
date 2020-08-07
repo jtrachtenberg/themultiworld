@@ -87,7 +87,8 @@ app.post('/addPlace', (req, res) => {
             spaceId: req.body.spaceId,
             title: req.body.title,
             description: req.body.description,
-            isRoot: req.body.isRoot
+            isRoot: req.body.isRoot,
+            exits: req.body.exits
         })
         .then((placeId) => res.status(200).json(placeId))
 })

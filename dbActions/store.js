@@ -55,7 +55,7 @@ module.exports = {
         }
         return spaceId
     },
-    addPlace({spaceId,title,description,isRoot}) {
+    addPlace({spaceId,title,description,isRoot, exits}) {
         var words = new pos.Lexer().lex(description)
         var tagger = new pos.Tagger()
         var taggedWords = tagger.tag(words)
@@ -68,8 +68,9 @@ module.exports = {
                 poiArray.push({word:taggedWord[0],tag:tag,description:'You see nothing special.'})
         }
         const poi = JSON.stringify(poiArray)
+        exits = JSON.stringify(exits)
         return knex('places').insert({
-            spaceId,title,description,isRoot,poi
+            spaceId,title,description,isRoot,exits,poi
         })
     },
     updateSpace({spaceId,userId,title,description,isRoot}) {
