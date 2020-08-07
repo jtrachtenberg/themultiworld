@@ -109,6 +109,9 @@ module.exports = {
     },
     loadPlace({placeId}) {
         return knex('places').where({placeId: placeId}).select('placeId','title','description','exits','poi','objects')
+    },
+    loadPlaces({spaceId}) {
+        return knex('places').where({spaceId: spaceId}).select('placeId','spaceId','title')
     }
 }
 
