@@ -3,13 +3,7 @@ const knex = require('knex')(require('./knexfile'))
 const util = require('util')
 
 var pos= require('pos');
-/*
-insert into `images` (`alt`, `apilink`, `externalId`, `placeId`, `src`) values 
-('frogs', 'https://api.unsplash.com/photos/B5PNmw5XSpk/download', 'B5PNmw5XSpk', 12, 
-'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?ixlib=rb-1.2.1&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=200&fit=max&ixid=eyJhcHBfaWQiOjE1MDg5MX0') 
-ON DUPLICATE KEY  UPDATE `placeId` = 12, `alt` = 'froms', `apilink` = 'https://api.unsplash.com/photos/B5PNmw5XSpk/download', 
-`src` = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?ixlib=rb-1.2.1&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=200&fit=max&ixid=eyJhcHBfaWQiOjE1MDg5MX0',
- `externalId` = 'B5PNmw5XSpk'*/
+
 function insertOrUpdate(tableName, rows){
     return knex.transaction(trx => {
         let queries = rows.map(tuple =>
@@ -130,11 +124,12 @@ module.exports = {
     updatePlace({spaceId,placeId,title,description,isRoot,exits,poi,objects,modalReturn}) {
         exits = exits||[]
         exits = JSON.stringify(exits)
-        modalReturn = modalReturn||{}
+        modalReturn = modalReturn||null
         //console.log(modalReturn)
         //modalObj = JSON.parse(modalReturn)
-
-        handleImages(modalReturn,null,null,placeId,null)
+        console.log(modalReturn)
+        if (modalReturn)
+            handleImages(modalReturn,null,null,placeId,null)
 
         var retVal = knex('places').where({placeId: placeId}).update({
             title: title,
@@ -151,7 +146,7 @@ module.exports = {
         return knex('spaces').where({userId: userId}).select('spaceId','title','description')
     },
     loadPlace({placeId}) {
-        return knex('places').where({placeId: placeId}).select('placeId','title','description','exits','poi','objects')
+        return knex('places').leftJoin('images','images.placeId','=','places.placeId').where({'places.placeId': placeId}).select('places.placeId','places.title','description','exits','poi','objects','images.src','images.alt')
     },
     loadPlaces({spaceId}) {
         return knex('places').where({spaceId: spaceId}).select('placeId','spaceId','title')
