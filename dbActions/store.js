@@ -3,6 +3,7 @@ const knex = require('knex')(require('./knexfile'))
 const util = require('util')
 
 var pos= require('pos');
+const { fchownSync } = require('fs');
 
 function insertOrUpdate(tableName, rows){
     return knex.transaction(trx => {
@@ -146,7 +147,26 @@ module.exports = {
         return knex('spaces').where({userId: userId}).select('spaceId','title','description')
     },
     loadPlace({placeId}) {
+        console.log('loadPlace')
+        //handle multiple rows - or split images into a separate function
         return knex('places').leftJoin('images','images.placeId','=','places.placeId').where({'places.placeId': placeId}).select('places.placeId','places.title','description','exits','poi','objects','images.src','images.alt')
+        .then((rows) => {
+            let retVal
+            let images = []
+            rows.forEach((row,i) => {
+                if (i === 0) {
+                    retVal = row
+                }
+                const image = {
+                    src:row.src,
+                    alt:row.alt
+                }
+                images.push(image)
+            })
+            rows[0].images = images
+            console.log(rows)
+            return rows
+        })
     },
     loadPlaces({spaceId}) {
         return knex('places').where({spaceId: spaceId}).select('placeId','spaceId','title')
