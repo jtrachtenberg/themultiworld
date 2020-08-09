@@ -1,7 +1,44 @@
 const crypto = require('crypto')
 const knex = require('knex')(require('./knexfile'))
+const util = require('util')
 
-var pos= require('pos')
+var pos= require('pos');
+/*
+insert into `images` (`alt`, `apilink`, `externalId`, `placeId`, `src`) values 
+('frogs', 'https://api.unsplash.com/photos/B5PNmw5XSpk/download', 'B5PNmw5XSpk', 12, 
+'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?ixlib=rb-1.2.1&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=200&fit=max&ixid=eyJhcHBfaWQiOjE1MDg5MX0') 
+ON DUPLICATE KEY  UPDATE `placeId` = 12, `alt` = 'froms', `apilink` = 'https://api.unsplash.com/photos/B5PNmw5XSpk/download', 
+`src` = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?ixlib=rb-1.2.1&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=200&fit=max&ixid=eyJhcHBfaWQiOjE1MDg5MX0',
+ `externalId` = 'B5PNmw5XSpk'*/
+function insertOrUpdate(tableName, rows){
+    return knex.transaction(trx => {
+        let queries = rows.map(tuple =>
+          trx.raw(util.format(`%s ON DUPLICATE KEY UPDATE %s`,
+            trx(tableName).insert(tuple).toString().toString(),
+            trx(tableName).update(tuple).toString().replace(/^update\s.*\sset\s/i, '')
+          ))               
+          .transacting(trx)
+        );
+        return Promise.all(queries).then(trx.commit).catch(trx.rollback);
+    })
+}
+
+function handleImages(modalReturn,userId,spaceId,placeId,objectId) {
+    const rows = []
+    const chkColumn = userId ? 'userId' : spaceId ? 'spaceId' : placeId ? 'placeId' : objectId ? 'objectId' : 'placeId'
+    const chkColumnValue = userId ? userId : spaceId ? spaceId : placeId ? placeId : objectId ? objectId : 0
+
+    const insertRow = {
+        [chkColumn]: chkColumnValue,
+        alt: modalReturn.alt,
+        apilink: modalReturn.apilink,
+        src: modalReturn.src,
+        externalId: modalReturn.id
+    }
+    rows.push(insertRow)
+    insertOrUpdate('images',rows)
+}
+
 module.exports = {
     create({item1, item2}) {
         console.log(`Add item ${item1} and ${item2}`)
@@ -90,9 +127,15 @@ module.exports = {
         }
         return retVal
     },
-    updatePlace({spaceId,placeId,title,description,isRoot,exits,poi,objects}) {
+    updatePlace({spaceId,placeId,title,description,isRoot,exits,poi,objects,modalReturn}) {
         exits = exits||[]
         exits = JSON.stringify(exits)
+        modalReturn = modalReturn||{}
+        //console.log(modalReturn)
+        //modalObj = JSON.parse(modalReturn)
+
+        handleImages(modalReturn,null,null,placeId,null)
+
         var retVal = knex('places').where({placeId: placeId}).update({
             title: title,
             description: description,

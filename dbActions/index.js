@@ -115,7 +115,8 @@ app.post('/updatePlace', (req, res) => {
         isRoot: req.body.isRoot,
         exits: req.body.exits,
         poi: JSON.stringify(req.body.poi),
-        objects: req.body.objects
+        objects: req.body.objects,
+        modalReturn: req.body.modalReturn
     }).then((place) => res.status(200).json(place))
 })
 var server = app.listen(7555, () => {
