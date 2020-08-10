@@ -4,6 +4,9 @@ const bodyParser = require('body-parser')
 const store = require('./store')
 
 const app = express()
+var http = require('http').createServer(app)
+var io = require('socket.io')(http)
+
 app.use(express.static('public'))
 app.use(bodyParser.json())
 
@@ -119,7 +122,23 @@ app.post('/updatePlace', (req, res) => {
         modalReturn: req.body.modalReturn
     }).then((place) => res.status(200).json(place))
 })
-var server = app.listen(7555, () => {
+
+io.on('connection', (socket) => {
+    console.log('a user connected');
+    socket.on("incoming data", (data)=>{
+        console.log('incoming data')
+        console.log(data)
+        //the order is important here
+        const type = data.objectId ? 'object' : data.placeId ? 'place' : data.spaceId ? 'space' : data.userId ? 'user' : 'msg'
+        //Here we broadcast it out to all other sockets EXCLUDING the socket which sent us the data
+       socket.broadcast.emit("outgoing data", {[type]: data});
+    });
+    socket.on('disconnect', () => {
+        console.log('user disconnected');
+    });
+});
+
+var server = http.listen(7555, () => {
     console.log('Server running on localhost:7555')
 })
 //Needed for Unit Testing

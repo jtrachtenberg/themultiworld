@@ -95,7 +95,7 @@ module.exports = {
         for (i in taggedWords) {
             var taggedWord = taggedWords[i]
             const tag = taggedWord[1]
-            console.log(tag)
+            //console.log(tag)
             if ( tag[0] === 'N' )
                 poiArray.push({word:taggedWord[0],tag:tag,description:'You see nothing special.'})
         }
@@ -126,9 +126,7 @@ module.exports = {
         exits = exits||[]
         exits = JSON.stringify(exits)
         modalReturn = modalReturn||null
-        //console.log(modalReturn)
-        //modalObj = JSON.parse(modalReturn)
-        console.log(modalReturn)
+        
         if (modalReturn)
             handleImages(modalReturn,null,null,placeId,null)
 
@@ -164,7 +162,6 @@ module.exports = {
                 images.push(image)
             })
             rows[0].images = images
-            console.log(rows)
             return rows
         })
     },
