@@ -131,7 +131,12 @@ io.on('connection', (socket) => {
         //the order is important here
         const type = data.objectId ? 'object' : data.placeId ? 'place' : data.spaceId ? 'space' : data.userId ? 'user' : 'msg'
         //Here we broadcast it out to all other sockets EXCLUDING the socket which sent us the data
-       socket.broadcast.emit("outgoing data", {[type]: data});
+       if (type === 'msg') {
+        const channel = `place:${data.msgPlaceId}`
+        console.log(channel)
+        socket.broadcast.emit(channel, {msg: data})
+       }
+       else socket.broadcast.emit("outgoing data", {[type]: data});
     });
     socket.on('disconnect', () => {
         console.log('user disconnected');
