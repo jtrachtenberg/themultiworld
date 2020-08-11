@@ -1,8 +1,6 @@
 const crypto = require('crypto')
 const knex = require('knex')(require('./knexfile'))
 const util = require('util')
-const Constants = require('./constants')
-//import * as Constants from './constants'
 
 var pos= require('pos');
 const { fchownSync } = require('fs');
@@ -47,7 +45,7 @@ module.exports = {
         console.log(`Add user ${userName} with email ${email}`)
         const salt = crypto.randomBytes(16).toString('hex')
         const pw = knex.raw("sha2(concat(?,?),512)",[salt,password])
-        if (Constants.isJSON) stateData = JSON.stringify(stateData)
+        stateData = JSON.stringify(stateData)
         const retVal = knex('users').insert({
             userName: userName,
             email: email,
@@ -102,8 +100,8 @@ module.exports = {
             if ( tag[0] === 'N' )
                 poiArray.push({word:taggedWord[0],tag:tag,description:'You see nothing special.'})
         }
-        const poi = Constants.isJSON ? JSON.stringify(poiArray) : poiArray
-        if (Constants.isJSON) exits = JSON.stringify(exits)
+        const poi = JSON.stringify(poiArray)
+        exits = JSON.stringify(exits)
         return knex('places').insert({
             spaceId,title,description,isRoot,exits,poi
         })
@@ -127,7 +125,7 @@ module.exports = {
     },
     updatePlace({spaceId,placeId,title,description,isRoot,exits,poi,objects,modalReturn}) {
         exits = exits||[]
-        if (Constants.isJSON) exits = JSON.stringify(exits)
+        exits = JSON.stringify(exits)
         modalReturn = modalReturn||null
 
         if (modalReturn)

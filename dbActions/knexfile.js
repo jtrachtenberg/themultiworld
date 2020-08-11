@@ -1,7 +1,4 @@
-//import * as Constants from './constants'
-const Constants = require('./constants')
-
-const JSONFieldType = Constants.isJSON ? 'JSON' : 'longtext'
+const JSONFieldType = 'JSON'// 'BLOB'
 console.log(JSONFieldType)
 module.exports = {
     client: 'mysql',
@@ -11,7 +8,7 @@ module.exports = {
       database: 'tmw',
       debug: true,
       typeCast: function (field, next) {
-        if (field.type === JSONFieldType) {
+        if (field.type === JSONFieldType && (field.name === 'poi' || field.name === 'exits' || field.name === 'stateData' || field.name === 'objects')) {
           return (JSON.parse(field.string()))
         }
         return next()
