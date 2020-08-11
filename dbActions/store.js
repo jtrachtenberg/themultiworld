@@ -45,6 +45,7 @@ module.exports = {
         console.log(`Add user ${userName} with email ${email}`)
         const salt = crypto.randomBytes(16).toString('hex')
         const pw = knex.raw("sha2(concat(?,?),512)",[salt,password])
+        stateData = JSON.stringify(stateData)
         const retVal = knex('users').insert({
             userName: userName,
             email: email,
@@ -52,7 +53,7 @@ module.exports = {
             salt: salt,
             password: pw
         })
-        console.log(retVal)
+        //console.log(retVal)
         return retVal
     },
     updateUser({userId,userName,email,description,isRoot}) {
@@ -126,7 +127,7 @@ module.exports = {
         exits = exits||[]
         exits = JSON.stringify(exits)
         modalReturn = modalReturn||null
-        
+
         if (modalReturn)
             handleImages(modalReturn,null,null,placeId,null)
 

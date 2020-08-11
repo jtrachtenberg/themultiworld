@@ -27,6 +27,7 @@ app.post('/create', (req, res) => {
         .then(() => res.sendStatus(200))
 })
 app.post('/addUser', (req, res) => {
+    console.log('add user')
     store
         .addUser({
             userName: req.body.userName,
