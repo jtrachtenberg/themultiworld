@@ -128,7 +128,7 @@ io.on('connection', (socket) => {
     console.log('a user connected');
     socket.on("incoming data", (data)=>{
         console.log('incoming data')
-        console.log(data)
+        //console.log(data)
         //the order is important here
         const type = data.objectId ? 'object' : data.placeId ? 'place' : data.spaceId ? 'space' : data.userId ? 'user' : 'msg'
         //Here we broadcast it out to all other sockets EXCLUDING the socket which sent us the data
@@ -136,6 +136,10 @@ io.on('connection', (socket) => {
         const channel = `place:${data.msgPlaceId}`
         console.log(channel)
         socket.broadcast.emit(channel, {msg: data})
+       } else if (type === 'place') {
+        const channel = `place:${data.msgPlaceId}`
+        console.log(channel)
+        socket.broadcast.emit("outgoing data", {[type]: data});
        }
        else socket.broadcast.emit("outgoing data", {[type]: data});
     });

@@ -35,12 +35,6 @@ function handleImages(modalReturn,userId,spaceId,placeId,objectId) {
 }
 
 module.exports = {
-    create({item1, item2}) {
-        console.log(`Add item ${item1} and ${item2}`)
-        return knex('temp_item_table').insert({
-            item1,item2
-        })
-    },
     addUser({userName,email,password,stateData}) {
         console.log(`Add user ${userName} with email ${email}`)
         const salt = crypto.randomBytes(16).toString('hex')
@@ -53,7 +47,6 @@ module.exports = {
             salt: salt,
             password: pw
         })
-        //console.log(retVal)
         return retVal
     },
     updateUser({userId,userName,email,description,isRoot}) {
@@ -69,7 +62,7 @@ module.exports = {
     login({userName,email,password}) {
         const columnCheck = (userName === null || userName.length === 0) ? 'email' : 'userName'
         const checkVal = columnCheck === 'email' ? email : userName
-        console.log(`login ${columnCheck} with ${checkVal} and password ${password}`)
+        console.log(`login ${columnCheck} with ${checkVal}`)
         if (columnCheck === 'email')
             return knex('users').whereRaw('email = ? AND sha2(concat(salt,?),512) = password',[checkVal,password]).first('userId','userName','email','description','isRoot','stateData')
         else
@@ -96,7 +89,6 @@ module.exports = {
         for (i in taggedWords) {
             var taggedWord = taggedWords[i]
             const tag = taggedWord[1]
-            //console.log(tag)
             if ( tag[0] === 'N' )
                 poiArray.push({word:taggedWord[0],tag:tag,description:'You see nothing special.'})
         }
