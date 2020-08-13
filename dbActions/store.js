@@ -157,6 +157,9 @@ module.exports = {
             rows[0].images = images
             return rows
         })
+        .catch((err) => {
+            console.log(err)
+        })
     },
     loadPlaces({spaceId}) {
         return knex('places').where({spaceId: spaceId}).select('placeId','spaceId','title')
