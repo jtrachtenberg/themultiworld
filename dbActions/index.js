@@ -111,7 +111,8 @@ app.post('/loadPlace', (req, res) => {
         .then((place) => res.status(200).json(place))
 })
 app.post('/updatePlace', (req, res) => {
-    store   .updatePlace({
+    store
+       .updatePlace({
         spaceId: req.body.spaceId,
         placeId: req.body.placeId,
         title: req.body.title,
@@ -123,7 +124,12 @@ app.post('/updatePlace', (req, res) => {
         modalReturn: req.body.modalReturn
     }).then((place) => res.status(200).json(place))
 })
-
+app.post('/loadDefaultPlace', (req,res) => {
+    store
+    .loadDefaultPlace({
+        userName: req.body.userName
+    }).then((place) => res.status(200).json(place))
+})
 io.on('connection', (socket) => {
     console.log('a user connected');
     socket.on("incoming data", (data)=>{

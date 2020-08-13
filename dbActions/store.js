@@ -138,7 +138,7 @@ module.exports = {
         return knex('spaces').where({userId: userId}).select('spaceId','title','description')
     },
     loadPlace({placeId}) {
-        console.log('loadPlace')
+        console.log(`loadPlace ${placeId}`)
         //handle multiple rows - or split images into a separate function
         return knex('places').leftJoin('images','images.placeId','=','places.placeId').where({'places.placeId': placeId}).select('places.placeId','places.title','description','exits','poi','objects','images.src','images.alt')
         .then((rows) => {
@@ -160,6 +160,10 @@ module.exports = {
     },
     loadPlaces({spaceId}) {
         return knex('places').where({spaceId: spaceId}).select('placeId','spaceId','title')
+    },
+    loadDefaultPlace({userName}) {
+        console.log(`loadDefault for ${userName}`)
+        return knex('places').join('spaces','places.spaceId','=','spaces.spaceId').join('users','spaces.userId','=','users.userId').where({'users.userName': userName, 'spaces.isRoot':true,'places.isRoot':true}).select('places.placeId','places.spaceId')
     }
 }
 
