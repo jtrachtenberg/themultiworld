@@ -120,7 +120,7 @@ module.exports = {
         exits = JSON.stringify(exits)
         modalReturn = modalReturn||null
 
-        if (modalReturn)
+        if (!Object.keys(modalReturn).length === 0 && modalReturn.constructor === Object)
             handleImages(modalReturn,null,null,placeId,null)
 
         var retVal = knex('places').where({placeId: placeId}).update({
@@ -140,7 +140,7 @@ module.exports = {
     loadPlace({placeId}) {
         console.log(`loadPlace ${placeId}`)
         //handle multiple rows - or split images into a separate function
-        return knex('places').leftJoin('images','images.placeId','=','places.placeId').where({'places.placeId': placeId}).select('places.placeId','places.title','description','exits','poi','objects','images.src','images.alt')
+        return knex('places').leftJoin('images','images.placeId','=','places.placeId').where({'places.placeId': placeId}).select('places.placeId','places.spaceId','places.title','description','exits','poi','objects','images.src','images.alt')
         .then((rows) => {
             let retVal
             let images = []
