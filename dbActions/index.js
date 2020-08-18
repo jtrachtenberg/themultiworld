@@ -121,7 +121,7 @@ app.post('/updatePlace', (req, res) => {
         exits: req.body.exits,
         poi: JSON.stringify(req.body.poi),
         objects: req.body.objects,
-        modalReturn: req.body.modalReturn
+        images: req.body.images
     }).then((place) => res.status(200).json(place))
 })
 app.post('/loadDefaultPlace', (req,res) => {
@@ -143,8 +143,6 @@ io.on('connection', (socket) => {
         console.log(channel)
         socket.broadcast.emit(channel, {msg: data})
        } else if (type === 'place') {
-        const channel = `place:${data.msgPlaceId}`
-        console.log(channel)
         socket.broadcast.emit("outgoing data", {[type]: data});
        }
        else socket.broadcast.emit("outgoing data", {[type]: data});

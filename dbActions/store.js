@@ -5,8 +5,19 @@ const util = require('util')
 var pos= require('pos');
 const { fchownSync } = require('fs');
 
+function deleteRows(tableName, rows) {
+    return knex.transaction(trx => {
+        let queries = rows.map(tuple => 
+            trx.raw(
+                trx(tableName).where(tuple).delete().toString()
+            )               
+            .transacting(trx)
+        )
+        return Promise.all(queries).then(trx.commit).catch(trx.rollback)
+    })
+}
+
 function insertOrUpdate(tableName, rows){
-    console.log('tableName',rows)
     return knex.transaction(trx => {
         let queries = rows.map(tuple =>
           trx.raw(util.format(`%s ON DUPLICATE KEY UPDATE %s`,
@@ -19,21 +30,39 @@ function insertOrUpdate(tableName, rows){
     })
 }
 
-function handleImages(modalReturn,userId,spaceId,placeId,objectId) {
+function handleImages(images,userId,spaceId,placeId,objectId) {
     const rows = []
+    const delrows = []
     const chkColumn = userId ? 'userId' : spaceId ? 'spaceId' : placeId ? 'placeId' : objectId ? 'objectId' : 'placeId'
     const chkColumnValue = userId ? userId : spaceId ? spaceId : placeId ? placeId : objectId ? objectId : 0
-    console.log(chkColumn)
-    const insertRow = {
-        [chkColumn]: chkColumnValue,
-        alt: modalReturn.alt,
-        apilink: modalReturn.apilink,
-        src: modalReturn.src,
-        externalId: modalReturn.id
-    }
-    rows.push(insertRow)
-    console.log(rows)
-    insertOrUpdate('images',rows)
+
+    knex("images").where(`${chkColumn}`,"=",`${chkColumnValue}`).select("imageId", "externalId").then(response => {
+
+        response.forEach((value) => {
+            console.log(value.externalId)
+            const image = images.find(image => image.id === value.externalId)
+            console.log(typeof(image))
+            if (typeof(image) === 'undefined') delrows.push({imageId:value.imageId})
+        })
+
+        if (delrows.length > 0)
+            deleteRows('images', delrows)
+    })
+    if (images.length > 0) {
+        images.forEach((value) => {
+            const insertRow = {
+                [chkColumn]: chkColumnValue,
+                alt: value.alt,
+                apilink: value.apilink,
+                src: value.src,
+                externalId: value.id
+            }
+            rows.push(insertRow)
+        }
+        )
+
+        insertOrUpdate('images',rows)
+    }      
 }
 
 module.exports = {
@@ -119,12 +148,15 @@ module.exports = {
         }
         return retVal
     },
-    updatePlace({spaceId,placeId,title,description,isRoot,exits,poi,objects,modalReturn}) {
+    updatePlace({spaceId,placeId,title,description,isRoot,exits,poi,objects,images}) {
         exits = exits||[]
         exits = JSON.stringify(exits)
-        modalReturn = modalReturn||null
-        if (Object.keys(modalReturn).length !== 0 && modalReturn.constructor === Object)
-            handleImages(modalReturn,null,null,placeId,null)
+        
+        poi = poi||[]
+
+        images = images||[]
+        if (Array.isArray(images))
+            handleImages(images,null,null,placeId,null)
 
         var retVal = knex('places').where({placeId: placeId}).update({
             title: title,
@@ -143,7 +175,7 @@ module.exports = {
     loadPlace({placeId}) {
         console.log(`loadPlace ${placeId}`)
         //handle multiple rows - or split images into a separate function
-        return knex('places').leftJoin('images','images.placeId','=','places.placeId').where({'places.placeId': placeId}).select('places.placeId','places.spaceId','places.title','description','exits','poi','objects','images.src','images.alt')
+        return knex('places').leftJoin('images','images.placeId','=','places.placeId').where({'places.placeId': placeId}).select('places.placeId','places.spaceId','places.title','description','exits','poi','objects','images.src','images.alt','images.externalId','images.apilink')
         .then((rows) => {
             let retVal
             let images = []
@@ -151,11 +183,15 @@ module.exports = {
                 if (i === 0) {
                     retVal = row
                 }
-                const image = {
-                    src:row.src,
-                    alt:row.alt
+                if (row.src) {
+                    const image = {
+                        src:row.src,
+                        alt:row.alt,
+                        apilink:row.apilink,
+                        id:row.externalId
+                    }
+                    images.push(image)
                 }
-                images.push(image)
             })
             rows[0].images = images
             return rows
