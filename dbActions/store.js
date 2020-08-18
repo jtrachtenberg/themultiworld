@@ -62,6 +62,8 @@ module.exports = {
         }).returning('userId')
     },
     login({userName,email,password}) {
+        userName=userName||""
+        email=email||""
         const columnCheck = (userName === null || userName.length === 0) ? 'email' : 'userName'
         const checkVal = columnCheck === 'email' ? email : userName
         console.log(`login ${columnCheck} with ${checkVal}`)
