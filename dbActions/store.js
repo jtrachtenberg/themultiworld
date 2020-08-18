@@ -6,6 +6,7 @@ var pos= require('pos');
 const { fchownSync } = require('fs');
 
 function insertOrUpdate(tableName, rows){
+    console.log('tableName',rows)
     return knex.transaction(trx => {
         let queries = rows.map(tuple =>
           trx.raw(util.format(`%s ON DUPLICATE KEY UPDATE %s`,
@@ -22,7 +23,7 @@ function handleImages(modalReturn,userId,spaceId,placeId,objectId) {
     const rows = []
     const chkColumn = userId ? 'userId' : spaceId ? 'spaceId' : placeId ? 'placeId' : objectId ? 'objectId' : 'placeId'
     const chkColumnValue = userId ? userId : spaceId ? spaceId : placeId ? placeId : objectId ? objectId : 0
-
+    console.log(chkColumn)
     const insertRow = {
         [chkColumn]: chkColumnValue,
         alt: modalReturn.alt,
@@ -31,6 +32,7 @@ function handleImages(modalReturn,userId,spaceId,placeId,objectId) {
         externalId: modalReturn.id
     }
     rows.push(insertRow)
+    console.log(rows)
     insertOrUpdate('images',rows)
 }
 
@@ -119,8 +121,7 @@ module.exports = {
         exits = exits||[]
         exits = JSON.stringify(exits)
         modalReturn = modalReturn||null
-
-        if (!Object.keys(modalReturn).length === 0 && modalReturn.constructor === Object)
+        if (Object.keys(modalReturn).length !== 0 && modalReturn.constructor === Object)
             handleImages(modalReturn,null,null,placeId,null)
 
         var retVal = knex('places').where({placeId: placeId}).update({
