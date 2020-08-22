@@ -206,6 +206,14 @@ module.exports = {
     loadDefaultPlace({userName}) {
         console.log(`loadDefault for ${userName}`)
         return knex('places').join('spaces','places.spaceId','=','spaces.spaceId').join('users','spaces.userId','=','users.userId').where({'users.userName': userName, 'spaces.isRoot':true,'places.isRoot':true}).select('places.placeId','places.spaceId')
+    },
+    createObject({userId, title, description, isRoot, actionStack}) {
+        console.log(`Create Object ${title}`)
+        var objectId = knex('objects').insert({
+            userId,title,description,isRoot,actionStack
+        }).returning('objectId')
+
+        return objectId
     }
 }
 

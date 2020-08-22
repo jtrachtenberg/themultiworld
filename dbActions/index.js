@@ -130,6 +130,16 @@ app.post('/loadDefaultPlace', (req,res) => {
         userName: req.body.userName
     }).then((place) => res.status(200).json(place))
 })
+app.post('/addObject', (req,res) => {
+    store
+    .createObject({
+        userId: req.body.userId, 
+        title: req.body.title, 
+        description: req.body.description, 
+        isRoot: req.body.isRoot, 
+        actionStack: req.body.actionStack
+    }).then((objectId) => res.status(200).json(objectId))
+})
 io.on('connection', (socket) => {
     console.log('a user connected');
     socket.on("incoming data", (data)=>{
