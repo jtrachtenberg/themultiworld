@@ -134,6 +134,7 @@ app.post('/addObject', (req,res) => {
     store
     .createObject({
         userId: req.body.userId, 
+        placeId: req.body.placeId,
         title: req.body.title, 
         description: req.body.description, 
         isRoot: req.body.isRoot, 

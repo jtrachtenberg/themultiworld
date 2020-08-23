@@ -207,8 +207,11 @@ module.exports = {
         console.log(`loadDefault for ${userName}`)
         return knex('places').join('spaces','places.spaceId','=','spaces.spaceId').join('users','spaces.userId','=','users.userId').where({'users.userName': userName, 'spaces.isRoot':true,'places.isRoot':true}).select('places.placeId','places.spaceId')
     },
-    createObject({userId, title, description, isRoot, actionStack}) {
+    createObject({userId, placeId, title, description, isRoot, actionStack}) {
+        userId=userId||0
+        placeId=placeId||0
         console.log(`Create Object ${title}`)
+        actionStack = JSON.stringify(actionStack)
         var objectId = knex('objects').insert({
             userId,title,description,isRoot,actionStack
         }).returning('objectId')
