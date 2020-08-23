@@ -155,6 +155,9 @@ module.exports = {
         poi = poi||[]
 
         images = images||[]
+
+        objects = objects||[]
+        objects = JSON.stringify(objects)
         if (Array.isArray(images))
             handleImages(images,null,null,placeId,null)
 
@@ -217,6 +220,9 @@ module.exports = {
         }).returning('objectId')
 
         return objectId
+    },
+    loadUserObjects({userId}) {
+        return knex('objects').where({userId: userId, isRoot: 1}).select('objectId','title','description','actionStack')
     }
 }
 

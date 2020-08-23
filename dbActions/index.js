@@ -141,6 +141,12 @@ app.post('/addObject', (req,res) => {
         actionStack: req.body.actionStack
     }).then((objectId) => res.status(200).json(objectId))
 })
+app.post('/loadUserObjects', (req,res) => {
+    store
+    .loadUserObjects({
+        userId: req.body.userId
+    }).then((objects) => res.status(200).json(objects))
+})
 io.on('connection', (socket) => {
     console.log('a user connected');
     socket.on("incoming data", (data)=>{
