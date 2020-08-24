@@ -90,6 +90,14 @@ module.exports = {
             updated_at: new Date()
         }).returning('userId')
     },
+    updateUserStateData({userId,stateData}) {
+        stateData = stateData||{}
+        stateData = JSON.stringify(stateData)
+
+        return knex('users').where({userId: userId}).update({
+            stateData: stateData
+        }).returning('userId')
+    },
     login({userName,email,password}) {
         userName=userName||""
         email=email||""
@@ -155,6 +163,9 @@ module.exports = {
         poi = poi||[]
 
         images = images||[]
+
+        objects = objects||[]
+        objects = JSON.stringify(objects)
         if (Array.isArray(images))
             handleImages(images,null,null,placeId,null)
 
@@ -175,7 +186,7 @@ module.exports = {
     loadPlace({placeId}) {
         console.log(`loadPlace ${placeId}`)
         //handle multiple rows - or split images into a separate function
-        return knex('places').leftJoin('images','images.placeId','=','places.placeId').where({'places.placeId': placeId}).select('places.placeId','places.spaceId','places.title','description','exits','poi','objects','images.src','images.alt','images.externalId','images.apilink')
+        return knex('places').leftJoin('images','images.placeId','=','places.placeId').where({'places.placeId': placeId}).select('places.placeId','places.spaceId','places.title','places.description','places.exits','places.poi','places.objects','images.src','images.alt','images.externalId','images.apilink')
         .then((rows) => {
             let retVal
             let images = []
@@ -201,7 +212,8 @@ module.exports = {
         })
     },
     loadPlaces({spaceId}) {
-        return knex('places').where({spaceId: spaceId}).select('placeId','spaceId','title')
+        console.log(`load places ${spaceId}`)
+        return knex('places').where({spaceId: spaceId}).whereNotIn('placeId', [0]).select('placeId','spaceId','title')
     },
     loadDefaultPlace({userName}) {
         console.log(`loadDefault for ${userName}`)
@@ -217,6 +229,9 @@ module.exports = {
         }).returning('objectId')
 
         return objectId
+    },
+    loadUserObjects({userId}) {
+        return knex('objects').where({userId: userId, isRoot: 1}).select('objectId','title','description','actionStack')
     }
 }
 
