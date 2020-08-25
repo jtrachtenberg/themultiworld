@@ -132,13 +132,14 @@ app.post('/loadDefaultPlace', (req,res) => {
 })
 app.post('/addObject', (req,res) => {
     store
-    .createObject({
+    .addObject({
         userId: req.body.userId, 
         placeId: req.body.placeId,
         title: req.body.title, 
         description: req.body.description, 
         isRoot: req.body.isRoot, 
-        actionStack: req.body.actionStack
+        actionStack: req.body.actionStack,
+        image: req.body.image
     }).then((objectId) => res.status(200).json(objectId))
 })
 app.post('/loadUserObjects', (req,res) => {

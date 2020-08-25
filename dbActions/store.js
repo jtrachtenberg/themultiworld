@@ -62,7 +62,9 @@ function handleImages(images,userId,spaceId,placeId,objectId) {
         )
 
         insertOrUpdate('images',rows)
-    }      
+    }
+
+    return chkColumnValue
 }
 
 module.exports = {
@@ -219,19 +221,43 @@ module.exports = {
         console.log(`loadDefault for ${userName}`)
         return knex('places').join('spaces','places.spaceId','=','spaces.spaceId').join('users','spaces.userId','=','users.userId').where({'users.userName': userName, 'spaces.isRoot':true,'places.isRoot':true}).select('places.placeId','places.spaceId')
     },
-    createObject({userId, placeId, title, description, isRoot, actionStack}) {
+    addObject({userId, placeId, title, description, isRoot, actionStack,image}) {
         userId=userId||0
         placeId=placeId||0
+        image=image||{}
+
         console.log(`Create Object ${title}`)
         actionStack = JSON.stringify(actionStack)
         var objectId = knex('objects').insert({
             userId,title,description,isRoot,actionStack
-        }).returning('objectId')
+        }).then(response => handleImages([image],null,null,null,response[0]))
 
         return objectId
     },
     loadUserObjects({userId}) {
-        return knex('objects').where({userId: userId, isRoot: 1}).select('objectId','title','description','actionStack')
+        return knex('objects').leftJoin('images','images.objectId','=','objects.objectId').where('objects.userId',userId).andWhere('objects.isRoot',1).select('objects.objectId','objects.title','objects.description','objects.actionStack','images.src','images.alt','images.externalId','images.apilink')
+        .then((rows) => {
+            rows.forEach((row,i) => {
+                if (row.src) {
+                    const image = {
+                        src:row.src,
+                        alt:row.alt,
+                        apilink:row.apilink,
+                        id:row.externalId
+                    }
+                    row.images=[image]
+                } else row.images=[]
+                delete row.src
+                delete row.alt
+                delete row.apilink
+                delete row.externalId
+                rows[i]=row
+            })
+            return rows
+        })
+        .catch((err) => {
+            console.log(err)
+        })
     }
 }
 
