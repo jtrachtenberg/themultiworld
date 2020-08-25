@@ -132,13 +132,14 @@ app.post('/loadDefaultPlace', (req,res) => {
 })
 app.post('/addObject', (req,res) => {
     store
-    .createObject({
+    .addObject({
         userId: req.body.userId, 
         placeId: req.body.placeId,
         title: req.body.title, 
         description: req.body.description, 
         isRoot: req.body.isRoot, 
-        actionStack: req.body.actionStack
+        actionStack: req.body.actionStack,
+        images: req.body.images
     }).then((objectId) => res.status(200).json(objectId))
 })
 app.post('/loadUserObjects', (req,res) => {
@@ -146,6 +147,24 @@ app.post('/loadUserObjects', (req,res) => {
     .loadUserObjects({
         userId: req.body.userId
     }).then((objects) => res.status(200).json(objects))
+})
+app.post('/updateObject', (req, res) => {
+    store
+    .updateObject({
+        objectId: req.body.objectId,
+        placeId: req.body.placeId,
+        title: req.body.title,
+        description: req.body.description,
+        isRoot: req.body.isRoot,
+        actionStack: req.body.actionStack,
+        images: req.body.images
+    }).then((response) => res.status(200).json(response))
+})
+app.post('/deleteObject', (req, res) => {
+    store
+    .deleteObject({
+        objectId: req.body.objectId
+    }).then(response => res.status(200).json(response))
 })
 io.on('connection', (socket) => {
     console.log('a user connected');
