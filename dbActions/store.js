@@ -39,9 +39,7 @@ function handleImages(images,userId,spaceId,placeId,objectId) {
     knex("images").where(`${chkColumn}`,"=",`${chkColumnValue}`).select("imageId", "externalId").then(response => {
 
         response.forEach((value) => {
-            console.log(value.externalId)
             const image = images.find(image => image.id === value.externalId)
-            console.log(typeof(image))
             if (typeof(image) === 'undefined') delrows.push({imageId:value.imageId})
         })
 
@@ -50,14 +48,16 @@ function handleImages(images,userId,spaceId,placeId,objectId) {
     })
     if (images.length > 0) {
         images.forEach((value) => {
-            const insertRow = {
-                [chkColumn]: chkColumnValue,
-                alt: value.alt,
-                apilink: value.apilink,
-                src: value.src,
-                externalId: value.id
+            if (typeof(value.alt) !== 'undefined') {
+                const insertRow = {
+                    [chkColumn]: chkColumnValue,
+                    alt: value.alt,
+                    apilink: value.apilink,
+                    src: value.src,
+                    externalId: value.id
+                }
+                rows.push(insertRow)
             }
-            rows.push(insertRow)
         }
         )
 
@@ -221,18 +221,36 @@ module.exports = {
         console.log(`loadDefault for ${userName}`)
         return knex('places').join('spaces','places.spaceId','=','spaces.spaceId').join('users','spaces.userId','=','users.userId').where({'users.userName': userName, 'spaces.isRoot':true,'places.isRoot':true}).select('places.placeId','places.spaceId')
     },
-    addObject({userId, placeId, title, description, isRoot, actionStack,image}) {
+    addObject({userId, placeId, title, description, isRoot, actionStack,images}) {
         userId=userId||0
         placeId=placeId||0
-        image=image||{}
+        images=images||[]
+        actionStack=actionStack||[]
 
         console.log(`Create Object ${title}`)
         actionStack = JSON.stringify(actionStack)
         var objectId = knex('objects').insert({
             userId,title,description,isRoot,actionStack
-        }).then(response => handleImages([image],null,null,null,response[0]))
+        }).then(response => handleImages(images,null,null,null,response[0]))
 
         return objectId
+    },
+    updateObject({objectId, placeId, title, description, isRoot, actionStack, images}) {
+        placeId=placeId||0
+        actionStack=actionStack||[]
+        images=images||[]
+
+        actionStack=JSON.stringify(actionStack)
+        handleImages(images,null,null,null,objectId)
+
+        return knex('objects').where({objectId: objectId}).update({
+            placeId: placeId,
+            title: title,
+            description: description,
+            isRoot: isRoot,
+            actionStack: actionStack,
+            updated_at: new Date()
+        })
     },
     loadUserObjects({userId}) {
         return knex('objects').leftJoin('images','images.objectId','=','objects.objectId').where('objects.userId',userId).andWhere('objects.isRoot',1).select('objects.objectId','objects.title','objects.description','objects.actionStack','images.src','images.alt','images.externalId','images.apilink')
@@ -258,6 +276,9 @@ module.exports = {
         .catch((err) => {
             console.log(err)
         })
+    },
+    deleteObject({objectId}) {
+        return knex("objects").where({objectId: objectId}).del()
     }
 }
 
