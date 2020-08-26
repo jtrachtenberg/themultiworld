@@ -193,8 +193,8 @@ io.on('connection', (socket) => {
     });
 });
 
-var server = http.listen(7555, () => {
-    console.log('Server running on localhost:7555')
+var server = http.listen(8880, () => {
+    console.log('Server running on localhost:8880')
 })
 //Needed for Unit Testing
 module.exports = server
