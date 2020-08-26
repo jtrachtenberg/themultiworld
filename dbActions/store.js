@@ -242,13 +242,17 @@ module.exports = {
         actionStack=JSON.stringify(actionStack)
         handleImages(images,null,null,null,objectId)
 
-        return knex('objects').where({objectId: objectId}).update({
-            placeId: placeId,
+        const insertObj = {
             title: title,
             description: description,
             isRoot: isRoot,
             actionStack: actionStack,
             updated_at: new Date()
+        }
+
+        if (placeId > 0 ) insertObj.placeId = placeId
+        return knex('objects').where({objectId: objectId}).update({
+            ...insertObj
         })
     },
     loadUserObjects({userId}) {
