@@ -67,6 +67,10 @@ function handleImages(images,userId,spaceId,placeId,objectId) {
 }
 
 module.exports = {
+    checkAuth({userId, auth}) {
+        console.log(userId, auth)
+        return new Promise((resolve, reject) => () => resolve([1]))
+    },
     addUser({userName,email,password,stateData}) {
         console.log(`Add user ${userName} with email ${email}`)
         const salt = crypto.randomBytes(16).toString('hex')
