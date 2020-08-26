@@ -3,7 +3,6 @@ const knex = require('knex')(require('./knexfile'))
 const util = require('util')
 
 var pos= require('pos');
-const { fchownSync } = require('fs');
 
 function deleteRows(tableName, rows) {
     return knex.transaction(trx => {
@@ -277,8 +276,22 @@ module.exports = {
             console.log(err)
         })
     },
-    deleteObject({objectId}) {
-        return knex("objects").where({objectId: objectId}).del()
+    async deleteObject({objectId}) {
+        let retVal = await knex("images").where(`objectId`,"=",`${objectId}`).select("imageId").then(rows => {
+            let delrows = []
+            rows.forEach((row) => delrows.push(row))
+            if (delrows.length > 0)
+                deleteRows('images', delrows).then(response => {
+                    return knex("objects").where({objectId: objectId}).del()
+                    //return new Promise((resolve, reject) => () => resolve(response))
+                })
+            else {
+                return knex("objects").where({objectId: objectId}).del()
+                //return new Promise((resolve, reject) => () => resolve([1]))
+            }    
+            
+        })
+        return retVal    
     }
 }
 
