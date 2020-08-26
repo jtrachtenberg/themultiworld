@@ -164,7 +164,10 @@ app.post('/deleteObject', (req, res) => {
     store
     .deleteObject({
         objectId: req.body.objectId
-    }).then(response => res.status(200).json(response))
+    }).then(response => {
+        if (typeof(response) === 'undefined') response=[1]
+        res.status(200).json(response)
+    })
 })
 io.on('connection', (socket) => {
     console.log('a user connected');
