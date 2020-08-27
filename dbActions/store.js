@@ -76,11 +76,21 @@ module.exports = {
 
         return knex('users').leftJoin(chkTable,`${chkTable}.${chkColumn}`,'=',chkColumnValue).where({'users.userId': userId}).select(`${chkTable}.${chkColumn}`,`${chkTable}.authType`, `${chkTable}.title`,'users.isRoot','users.auth').then ( (rows) => {
             rows.forEach((row,i) => {
+                row.auth = JSON.parse(row.auth)
+
                 if (row.isRoot) row.isAuth = isAuth && true
                 else if (row.authType === 0) row.isAuth = isAuth && true
                 else if (Array.isArray(row.auth)) {
                     //Check if user is authorized
-                    row.isAuth = isAuth && false
+                    let found = false
+                    element = row.auth.find(item => {
+                        if (typeof(item) === 'string')
+                            item = JSON.parse(item)
+                        return item[chkColumn] === chkColumnValue
+                    })
+                    if (typeof(element) !== 'undefined') found = true
+                    
+                    row.isAuth = isAuth && found
                 }
                 else row.isAuth = false
 
@@ -124,6 +134,29 @@ module.exports = {
         return knex('users').where({userId: userId}).update({
             stateData: stateData
         }).returning('userId')
+    },
+    updateUserAuth({userId,auth}) {
+        auth = auth||[]
+//            retVal.push({authChange:"add",authType:item.authType,[item.authType]:item[item.authType]})
+
+        return knex('users').where({userId: userId}).select("auth").then(rows => {
+            const row = rows[0]
+//                const actionStack = JSON.parse(object.actionStack.replace(/\\/g, ""))
+
+            if (typeof(row.auth) === 'string') row.auth= JSON.parse(row.auth.replace(/\\/g, ""))
+            const currentAuth = (row.auth === null || typeof(row.auth) === 'undefined') ? [] : row.auth
+            const findAuth = currentAuth.find(searchAuth => searchAuth[auth.authType] === auth[auth.authType])
+            if (auth.authChange === 'add' && typeof(findAuth) === 'undefined') {
+                delete auth.authChange
+                delete auth.authType
+                currentAuth.push(auth)
+            }
+            else if (auth.authChange === 'del' && typeof(findAuth) !== 'undefined') {
+                currentAuth = currentAuth.filter(obj => obj[auth.authType] !== auth[auth.authType])
+            }
+
+            return knex('users').where({userId: userId}).update({ auth: JSON.stringify(currentAuth) }).returning('userId')   
+        })
     },
     login({userName,email,password}) {
         userName=userName||""

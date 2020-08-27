@@ -194,7 +194,13 @@ io.on('connection', (socket) => {
            store.updateUserStateData({
                userId: data.userId,
                stateData: data.stateData
-           }).then(response => {})
+           }).then(response => {
+               if (typeof(data.auth) !== 'undefined')
+               store.updateUserAuth({
+                   userId: data.userId,
+                   auth: data.auth
+               }).then(response => {})
+           })
        }
        else socket.broadcast.emit("outgoing data", {[type]: data});
     });
