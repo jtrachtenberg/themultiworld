@@ -27,7 +27,6 @@ app.post('/create', (req, res) => {
         .then(() => res.sendStatus(200))
 })
 app.post('/addUser', (req, res) => {
-    console.log('add user')
     store
         .addUser({
             userName: req.body.userName,
@@ -172,8 +171,7 @@ app.post('/deleteObject', (req, res) => {
 io.on('connection', (socket) => {
     console.log('a user connected');
     socket.on("incoming data", (data)=>{
-        console.log('incoming data')
-        console.log(data)
+
         //the order is important here
         const type = typeof(data.type) !== 'undefined' ? data.type : typeof(data.stateData) === 'object' ? 'userStateData' : data.objectId ? 'object' : data.placeId ? 'place' : data.spaceId ? 'space' : data.userId ? 'user' : 'msg'
         //Here we broadcast it out to all other sockets EXCLUDING the socket which sent us the data
@@ -186,7 +184,7 @@ io.on('connection', (socket) => {
        }
        else if (type === 'msg') {
         const channel = `place:${data.msgPlaceId}`
-        console.log(channel)
+
         socket.broadcast.emit(channel, {msg: data})
        } else if (type === 'place') {
         socket.broadcast.emit("outgoing data", {[type]: data});
