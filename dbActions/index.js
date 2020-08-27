@@ -138,7 +138,8 @@ app.post('/addObject', (req,res) => {
         description: req.body.description, 
         isRoot: req.body.isRoot, 
         actionStack: req.body.actionStack,
-        images: req.body.images
+        images: req.body.images,
+        auth: req.body.auth
     }).then((objectId) => res.status(200).json(objectId))
 })
 app.post('/loadUserObjects', (req,res) => {
@@ -156,7 +157,8 @@ app.post('/updateObject', (req, res) => {
         description: req.body.description,
         isRoot: req.body.isRoot,
         actionStack: req.body.actionStack,
-        images: req.body.images
+        images: req.body.images,
+        auth: req.body.auth
     }).then((response) => res.status(200).json(response))
 })
 app.post('/deleteObject', (req, res) => {

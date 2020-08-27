@@ -246,26 +246,30 @@ module.exports = {
         console.log(`loadDefault for ${userName}`)
         return knex('places').join('spaces','places.spaceId','=','spaces.spaceId').join('users','spaces.userId','=','users.userId').where({'users.userName': userName, 'spaces.isRoot':true,'places.isRoot':true}).select('places.placeId','places.spaceId')
     },
-    addObject({userId, placeId, title, description, isRoot, actionStack,images}) {
+    addObject({userId, placeId, title, description, isRoot, actionStack,images, auth}) {
         userId=userId||0
         placeId=placeId||0
         images=images||[]
         actionStack=actionStack||[]
+        auth=auth||[]
 
         console.log(`Create Object ${title}`)
         actionStack = JSON.stringify(actionStack)
+        auth = JSON.stringify(auth)
         var objectId = knex('objects').insert({
-            userId,title,description,isRoot,actionStack
+            userId,title,description,isRoot,actionStack,auth
         }).then(response => handleImages(images,null,null,null,response[0]))
 
         return objectId
     },
-    updateObject({objectId, placeId, title, description, isRoot, actionStack, images}) {
+    updateObject({objectId, placeId, title, description, isRoot, actionStack, images, auth}) {
         placeId=placeId||0
         actionStack=actionStack||[]
         images=images||[]
+        auth=auth||[]
 
         actionStack=JSON.stringify(actionStack)
+        auth=JSON.stringify(auth)
         handleImages(images,null,null,null,objectId)
 
         const insertObj = {
@@ -273,6 +277,7 @@ module.exports = {
             description: description,
             isRoot: isRoot,
             actionStack: actionStack,
+            auth: auth,
             updated_at: new Date()
         }
 
@@ -282,7 +287,7 @@ module.exports = {
         })
     },
     loadUserObjects({userId}) {
-        return knex('objects').leftJoin('images','images.objectId','=','objects.objectId').where('objects.userId',userId).andWhere('objects.isRoot',1).select('objects.objectId','objects.title','objects.description','objects.actionStack','images.src','images.alt','images.externalId','images.apilink')
+        return knex('objects').leftJoin('images','images.objectId','=','objects.objectId').where('objects.userId',userId).andWhere('objects.isRoot',1).select('objects.objectId','objects.title','objects.description','objects.actionStack','objects.auth','images.src','images.alt','images.externalId','images.apilink')
         .then((rows) => {
             rows.forEach((row,i) => {
                 if (row.src) {
