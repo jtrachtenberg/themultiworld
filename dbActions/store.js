@@ -67,9 +67,31 @@ function handleImages(images,userId,spaceId,placeId,objectId) {
 }
 
 module.exports = {
-    checkAuth({userId, auth}) {
-        console.log(userId, auth)
-        return new Promise((resolve, reject) => () => resolve([1]))
+    checkAuth({userId, inAuth}) {
+        let isAuth = true
+        const authType = typeof(inAuth.type) !== 'undefined' ? inAuth.type : inAuth.objectId ? 'object' : inAuth.placeId ? 'place' : inAuth.spaceId ? 'space' : inAuth.userId ? 'user' : 'msg'
+        const chkTable = authType+'s'
+        const chkColumn = authType+'Id'
+        const chkColumnValue = inAuth[chkColumn]
+
+        return knex('users').leftJoin(chkTable,`${chkTable}.${chkColumn}`,'=',chkColumnValue).where({'users.userId': userId}).select(`${chkTable}.${chkColumn}`,`${chkTable}.authType`, `${chkTable}.title`,'users.isRoot','users.auth').then ( (rows) => {
+            rows.forEach((row,i) => {
+                if (row.isRoot) row.isAuth = isAuth && true
+                else if (row.authType === 0) row.isAuth = isAuth && true
+                else if (Array.isArray(row.auth)) {
+                    //Check if user is authorized
+                    row.isAuth = isAuth && false
+                }
+                else row.isAuth = false
+
+                rows[i]=row
+            })
+            return rows
+        })
+        .catch((err) => {
+            console.log(err)
+        })
+       
     },
     addUser({userName,email,password,stateData}) {
         console.log(`Add user ${userName} with email ${email}`)
@@ -191,7 +213,7 @@ module.exports = {
     loadPlace({placeId}) {
         console.log(`loadPlace ${placeId}`)
         //handle multiple rows - or split images into a separate function
-        return knex('places').leftJoin('images','images.placeId','=','places.placeId').where({'places.placeId': placeId}).select('places.placeId','places.spaceId','places.title','places.description','places.exits','places.poi','places.objects','images.src','images.alt','images.externalId','images.apilink')
+        return knex('places').leftJoin('images','images.placeId','=','places.placeId').where({'places.placeId': placeId}).select('places.placeId','places.spaceId','places.title','places.description','places.exits','places.poi','places.objects','places.authType','places.isRoot','images.src','images.alt','images.externalId','images.apilink')
         .then((rows) => {
             let retVal
             let images = []

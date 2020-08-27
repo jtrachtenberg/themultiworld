@@ -174,14 +174,14 @@ io.on('connection', (socket) => {
     socket.on("incoming data", (data)=>{
         console.log('incoming data')
         console.log(data)
-        //console.log(data)
         //the order is important here
         const type = typeof(data.type) !== 'undefined' ? data.type : typeof(data.stateData) === 'object' ? 'userStateData' : data.objectId ? 'object' : data.placeId ? 'place' : data.spaceId ? 'space' : data.userId ? 'user' : 'msg'
         //Here we broadcast it out to all other sockets EXCLUDING the socket which sent us the data
        if (type === 'auth') {
-           const response = store.checkAuth({userId: data.userId, auth: data.auth}).then(response => {
+           store.checkAuth({userId: data.userId, inAuth: data.auth}).then(response => {
+               const retObj = {type:'auth',isAuth: response}
                const channel = `auth:${data.userId}`
-               socket.emit(channel, response)
+               socket.emit(channel, retObj)
            })
        }
        else if (type === 'msg') {
