@@ -360,6 +360,20 @@ module.exports = {
             
         })
         return retVal    
+    },
+    loadImages({inObj}) {
+        console.log('loadImages')
+        if (!Array.isArray(inObj)) return
+  
+        return knex.transaction(trx => {
+            let queries = inObj.map(tuple => 
+                trx.raw(
+                    trx("images").where(tuple).first("alt","src","placeId","objectId","userId").toString()
+                )               
+                .transacting(trx)
+            )
+            return Promise.all(queries).then(trx.commit).catch(trx.rollback)
+        })
     }
 }
 

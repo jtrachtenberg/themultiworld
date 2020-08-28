@@ -170,6 +170,19 @@ app.post('/deleteObject', (req, res) => {
         res.status(200).json(response)
     })
 })
+app.post('/loadImages', (req,res) => {
+    store
+    .loadImages({
+        inObj: req.body.inObj
+    }).then(response => {
+
+        const finalResponse = []
+        response.forEach(item => {
+            finalResponse.push(item[0][0])
+        })
+        res.status(200).json(finalResponse)
+    })
+})
 io.on('connection', (socket) => {
     console.log('a user connected');
     socket.on("incoming data", (data)=>{
