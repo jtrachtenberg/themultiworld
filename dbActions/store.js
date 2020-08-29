@@ -290,7 +290,7 @@ module.exports = {
     loadPlace({placeId}) {
         console.log(`loadPlace ${placeId}`)
         //handle multiple rows - or split images into a separate function
-        return knex('places').leftJoin('images','images.placeId','=','places.placeId').leftJoin('audio','audio.placeId','=','places.placeId').where({'places.placeId': placeId}).select('places.placeId','places.spaceId','places.title','places.description','places.exits','places.poi','places.objects','places.authType','places.isRoot','images.src as imgsrc','images.alt','images.externalId as imgexternalId','images.apilink','audio.src as audiosrc')
+        return knex('places').leftJoin('spaces','spaces.spaceId','=','places.spaceId').leftJoin('images','images.placeId','=','places.placeId').leftJoin('audio','audio.placeId','=','places.placeId').where({'places.placeId': placeId}).select('spaces.userId','places.placeId','places.spaceId','places.title','places.description','places.exits','places.poi','places.objects','places.authType','places.isRoot','images.src as imgsrc','images.alt','images.externalId as imgexternalId','images.apilink','audio.src as audiosrc','audio.description as audiodescription','audio.name as audioname','audio.externalId as audioexternalid','audio.username as audiousername','audio.externalUrl as audioexternalurl')
         .then((rows) => {
             let retVal
             let images = []
@@ -311,7 +311,12 @@ module.exports = {
                 }
                 if (row.audiosrc) {
                     const sound = {
-                        src:row.audiosrc
+                        src:row.audiosrc,
+                        name:row.audioname,
+                        description:row.audiodescription,
+                        externalId:row.audioexternalid,
+                        externalUrl:row.audioexternalurl,
+                        userName:row.audiousername
                     }
                     audio.push(sound)
                 }
