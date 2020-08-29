@@ -117,6 +117,7 @@ app.post('/updatePlace', (req, res) => {
         title: req.body.title,
         description: req.body.description,
         isRoot: req.body.isRoot,
+        authType: req.body.authType,
         exits: req.body.exits,
         poi: JSON.stringify(req.body.poi),
         objects: req.body.objects,

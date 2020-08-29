@@ -256,10 +256,11 @@ module.exports = {
         }
         return retVal
     },
-    updatePlace({spaceId,placeId,title,description,isRoot,exits,poi,objects,images,audio}) {
+    updatePlace({spaceId,placeId,title,description,isRoot,exits,poi,objects,images,audio, authType}) {
         exits = exits||[]
         exits = JSON.stringify(exits)
-        
+        authType = authType||0
+
         poi = poi||[]
 
         images = images||[]
@@ -280,6 +281,7 @@ module.exports = {
             exits: exits,
             poi: poi,
             objects: objects,
+            authType: authType,
             updated_at: new Date()
         }).returning('placeId')
         return retVal
