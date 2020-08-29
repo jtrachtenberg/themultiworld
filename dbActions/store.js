@@ -29,6 +29,46 @@ function insertOrUpdate(tableName, rows){
     })
 }
 
+function handleAudio(audio,userId,spaceId,placeId,objectId) {
+    const rows = []
+    const delrows = []
+    const chkColumn = userId ? 'userId' : spaceId ? 'spaceId' : placeId ? 'placeId' : objectId ? 'objectId' : 'placeId'
+    const chkColumnValue = userId ? userId : spaceId ? spaceId : placeId ? placeId : objectId ? objectId : 0
+
+    knex("audio").where(`${chkColumn}`,"=",`${chkColumnValue}`).select("audioId", "externalId").then(response => {
+
+        response.forEach((value) => {
+            const sound = audio.find(sound => sound.externalId === value.externalId)
+            if (typeof(sound) === 'undefined') delrows.push({audioId:value.audioId})
+        })
+
+        if (delrows.length > 0)
+            deleteRows('audio', delrows)
+    })
+    if (audio.length > 0) {
+        audio.forEach((value) => {
+            if (typeof(value.src) !== 'undefined') {
+                const insertRow = {
+                    [chkColumn]: chkColumnValue,
+                    name: value.name,
+                    description: value.description,
+                    src: value.src,
+                    externalId: value.externalId,
+                    externalUrl: value.externalUrl,
+                    userName: value.userName
+                }
+                rows.push(insertRow)
+            }
+        }
+        )
+
+        insertOrUpdate('audio',rows)
+    }
+
+    return chkColumnValue
+}
+
+
 function handleImages(images,userId,spaceId,placeId,objectId) {
     const rows = []
     const delrows = []
@@ -216,18 +256,22 @@ module.exports = {
         }
         return retVal
     },
-    updatePlace({spaceId,placeId,title,description,isRoot,exits,poi,objects,images}) {
+    updatePlace({spaceId,placeId,title,description,isRoot,exits,poi,objects,images,audio}) {
         exits = exits||[]
         exits = JSON.stringify(exits)
         
         poi = poi||[]
 
         images = images||[]
+        audio = audio||[]
 
         objects = objects||[]
         objects = JSON.stringify(objects)
         if (Array.isArray(images))
             handleImages(images,null,null,placeId,null)
+
+        if (Array.isArray(audio))
+            handleAudio(audio,null,null,placeId,null)
 
         var retVal = knex('places').where({placeId: placeId}).update({
             title: title,
@@ -246,25 +290,34 @@ module.exports = {
     loadPlace({placeId}) {
         console.log(`loadPlace ${placeId}`)
         //handle multiple rows - or split images into a separate function
-        return knex('places').leftJoin('images','images.placeId','=','places.placeId').where({'places.placeId': placeId}).select('places.placeId','places.spaceId','places.title','places.description','places.exits','places.poi','places.objects','places.authType','places.isRoot','images.src','images.alt','images.externalId','images.apilink')
+        return knex('places').leftJoin('images','images.placeId','=','places.placeId').leftJoin('audio','audio.placeId','=','places.placeId').where({'places.placeId': placeId}).select('places.placeId','places.spaceId','places.title','places.description','places.exits','places.poi','places.objects','places.authType','places.isRoot','images.src as imgsrc','images.alt','images.externalId as imgexternalId','images.apilink','audio.src as audiosrc')
         .then((rows) => {
             let retVal
             let images = []
+            let audio = []
             rows.forEach((row,i) => {
+               
                 if (i === 0) {
                     retVal = row
                 }
-                if (row.src) {
+                if (row.alt) {
                     const image = {
-                        src:row.src,
+                        src:row.imgsrc,
                         alt:row.alt,
                         apilink:row.apilink,
-                        id:row.externalId
+                        id:row.imgexternalId
                     }
                     images.push(image)
                 }
+                if (row.audiosrc) {
+                    const sound = {
+                        src:row.audiosrc
+                    }
+                    audio.push(sound)
+                }
             })
             rows[0].images = images
+            rows[0].audio = audio
             return rows
         })
         .catch((err) => {

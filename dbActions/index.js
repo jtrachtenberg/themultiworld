@@ -120,7 +120,8 @@ app.post('/updatePlace', (req, res) => {
         exits: req.body.exits,
         poi: JSON.stringify(req.body.poi),
         objects: req.body.objects,
-        images: req.body.images
+        images: req.body.images,
+        audio: req.body.audio
     }).then((place) => res.status(200).json(place))
 })
 app.post('/loadDefaultPlace', (req,res) => {
