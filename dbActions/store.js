@@ -29,6 +29,46 @@ function insertOrUpdate(tableName, rows){
     })
 }
 
+function handleAudio(audio,userId,spaceId,placeId,objectId) {
+    const rows = []
+    const delrows = []
+    const chkColumn = userId ? 'userId' : spaceId ? 'spaceId' : placeId ? 'placeId' : objectId ? 'objectId' : 'placeId'
+    const chkColumnValue = userId ? userId : spaceId ? spaceId : placeId ? placeId : objectId ? objectId : 0
+
+    knex("audio").where(`${chkColumn}`,"=",`${chkColumnValue}`).select("audioId", "externalId").then(response => {
+
+        response.forEach((value) => {
+            const sound = audio.find(sound => sound.externalId === value.externalId)
+            if (typeof(sound) === 'undefined') delrows.push({audioId:value.audioId})
+        })
+
+        if (delrows.length > 0)
+            deleteRows('audio', delrows)
+    })
+    if (audio.length > 0) {
+        audio.forEach((value) => {
+            if (typeof(value.src) !== 'undefined') {
+                const insertRow = {
+                    [chkColumn]: chkColumnValue,
+                    name: value.name,
+                    description: value.description,
+                    src: value.src,
+                    externalId: value.externalId,
+                    externalUrl: value.externalUrl,
+                    userName: value.userName
+                }
+                rows.push(insertRow)
+            }
+        }
+        )
+
+        insertOrUpdate('audio',rows)
+    }
+
+    return chkColumnValue
+}
+
+
 function handleImages(images,userId,spaceId,placeId,objectId) {
     const rows = []
     const delrows = []
@@ -67,6 +107,42 @@ function handleImages(images,userId,spaceId,placeId,objectId) {
 }
 
 module.exports = {
+    checkAuth({userId, inAuth}) {
+        let isAuth = true
+        const authType = typeof(inAuth.type) !== 'undefined' ? inAuth.type : inAuth.objectId ? 'object' : inAuth.placeId ? 'place' : inAuth.spaceId ? 'space' : inAuth.userId ? 'user' : 'msg'
+        const chkTable = authType+'s'
+        const chkColumn = authType+'Id'
+        const chkColumnValue = inAuth[chkColumn]
+
+        return knex('users').leftJoin(chkTable,`${chkTable}.${chkColumn}`,'=',chkColumnValue).where({'users.userId': userId}).select(`${chkTable}.${chkColumn}`,`${chkTable}.authType`, `${chkTable}.title`,'users.isRoot','users.auth').then ( (rows) => {
+            rows.forEach((row,i) => {
+                row.auth = JSON.parse(row.auth)
+
+                if (row.isRoot) row.isAuth = isAuth && true
+                else if (row.authType === 0) row.isAuth = isAuth && true
+                else if (Array.isArray(row.auth)) {
+                    //Check if user is authorized
+                    let found = false
+                    element = row.auth.find(item => {
+                        if (typeof(item) === 'string')
+                            item = JSON.parse(item)
+                        return item[chkColumn] === chkColumnValue
+                    })
+                    if (typeof(element) !== 'undefined') found = true
+                    
+                    row.isAuth = isAuth && found
+                }
+                else row.isAuth = false
+
+                rows[i]=row
+            })
+            return rows
+        })
+        .catch((err) => {
+            console.log(err)
+        })
+       
+    },
     addUser({userName,email,password,stateData}) {
         console.log(`Add user ${userName} with email ${email}`)
         const salt = crypto.randomBytes(16).toString('hex')
@@ -98,6 +174,29 @@ module.exports = {
         return knex('users').where({userId: userId}).update({
             stateData: stateData
         }).returning('userId')
+    },
+    updateUserAuth({userId,auth}) {
+        auth = auth||[]
+//            retVal.push({authChange:"add",authType:item.authType,[item.authType]:item[item.authType]})
+
+        return knex('users').where({userId: userId}).select("auth").then(rows => {
+            const row = rows[0]
+//                const actionStack = JSON.parse(object.actionStack.replace(/\\/g, ""))
+
+            if (typeof(row.auth) === 'string') row.auth= JSON.parse(row.auth.replace(/\\/g, ""))
+            const currentAuth = (row.auth === null || typeof(row.auth) === 'undefined') ? [] : row.auth
+            const findAuth = currentAuth.find(searchAuth => searchAuth[auth.authType] === auth[auth.authType])
+            if (auth.authChange === 'add' && typeof(findAuth) === 'undefined') {
+                delete auth.authChange
+                delete auth.authType
+                currentAuth.push(auth)
+            }
+            else if (auth.authChange === 'del' && typeof(findAuth) !== 'undefined') {
+                currentAuth = currentAuth.filter(obj => obj[auth.authType] !== auth[auth.authType])
+            }
+
+            return knex('users').where({userId: userId}).update({ auth: JSON.stringify(currentAuth) }).returning('userId')   
+        })
     },
     login({userName,email,password}) {
         userName=userName||""
@@ -157,18 +256,22 @@ module.exports = {
         }
         return retVal
     },
-    updatePlace({spaceId,placeId,title,description,isRoot,exits,poi,objects,images}) {
+    updatePlace({spaceId,placeId,title,description,isRoot,exits,poi,objects,images,audio}) {
         exits = exits||[]
         exits = JSON.stringify(exits)
         
         poi = poi||[]
 
         images = images||[]
+        audio = audio||[]
 
         objects = objects||[]
         objects = JSON.stringify(objects)
         if (Array.isArray(images))
             handleImages(images,null,null,placeId,null)
+
+        if (Array.isArray(audio))
+            handleAudio(audio,null,null,placeId,null)
 
         var retVal = knex('places').where({placeId: placeId}).update({
             title: title,
@@ -187,25 +290,34 @@ module.exports = {
     loadPlace({placeId}) {
         console.log(`loadPlace ${placeId}`)
         //handle multiple rows - or split images into a separate function
-        return knex('places').leftJoin('images','images.placeId','=','places.placeId').where({'places.placeId': placeId}).select('places.placeId','places.spaceId','places.title','places.description','places.exits','places.poi','places.objects','images.src','images.alt','images.externalId','images.apilink')
+        return knex('places').leftJoin('images','images.placeId','=','places.placeId').leftJoin('audio','audio.placeId','=','places.placeId').where({'places.placeId': placeId}).select('places.placeId','places.spaceId','places.title','places.description','places.exits','places.poi','places.objects','places.authType','places.isRoot','images.src as imgsrc','images.alt','images.externalId as imgexternalId','images.apilink','audio.src as audiosrc')
         .then((rows) => {
             let retVal
             let images = []
+            let audio = []
             rows.forEach((row,i) => {
+               
                 if (i === 0) {
                     retVal = row
                 }
-                if (row.src) {
+                if (row.alt) {
                     const image = {
-                        src:row.src,
+                        src:row.imgsrc,
                         alt:row.alt,
                         apilink:row.apilink,
-                        id:row.externalId
+                        id:row.imgexternalId
                     }
                     images.push(image)
                 }
+                if (row.audiosrc) {
+                    const sound = {
+                        src:row.audiosrc
+                    }
+                    audio.push(sound)
+                }
             })
             rows[0].images = images
+            rows[0].audio = audio
             return rows
         })
         .catch((err) => {
@@ -220,26 +332,30 @@ module.exports = {
         console.log(`loadDefault for ${userName}`)
         return knex('places').join('spaces','places.spaceId','=','spaces.spaceId').join('users','spaces.userId','=','users.userId').where({'users.userName': userName, 'spaces.isRoot':true,'places.isRoot':true}).select('places.placeId','places.spaceId')
     },
-    addObject({userId, placeId, title, description, isRoot, actionStack,images}) {
+    addObject({userId, placeId, title, description, isRoot, actionStack,images, auth}) {
         userId=userId||0
         placeId=placeId||0
         images=images||[]
         actionStack=actionStack||[]
+        auth=auth||[]
 
         console.log(`Create Object ${title}`)
         actionStack = JSON.stringify(actionStack)
+        auth = JSON.stringify(auth)
         var objectId = knex('objects').insert({
-            userId,title,description,isRoot,actionStack
+            userId,title,description,isRoot,actionStack,auth
         }).then(response => handleImages(images,null,null,null,response[0]))
 
         return objectId
     },
-    updateObject({objectId, placeId, title, description, isRoot, actionStack, images}) {
+    updateObject({objectId, placeId, title, description, isRoot, actionStack, images, auth}) {
         placeId=placeId||0
         actionStack=actionStack||[]
         images=images||[]
+        auth=auth||[]
 
         actionStack=JSON.stringify(actionStack)
+        auth=JSON.stringify(auth)
         handleImages(images,null,null,null,objectId)
 
         const insertObj = {
@@ -247,6 +363,7 @@ module.exports = {
             description: description,
             isRoot: isRoot,
             actionStack: actionStack,
+            auth: auth,
             updated_at: new Date()
         }
 
@@ -256,7 +373,7 @@ module.exports = {
         })
     },
     loadUserObjects({userId}) {
-        return knex('objects').leftJoin('images','images.objectId','=','objects.objectId').where('objects.userId',userId).andWhere('objects.isRoot',1).select('objects.objectId','objects.title','objects.description','objects.actionStack','images.src','images.alt','images.externalId','images.apilink')
+        return knex('objects').leftJoin('images','images.objectId','=','objects.objectId').where('objects.userId',userId).andWhere('objects.isRoot',1).select('objects.objectId','objects.title','objects.description','objects.actionStack','objects.auth','images.src','images.alt','images.externalId','images.apilink')
         .then((rows) => {
             rows.forEach((row,i) => {
                 if (row.src) {
@@ -296,6 +413,20 @@ module.exports = {
             
         })
         return retVal    
+    },
+    loadImages({inObj}) {
+        console.log('loadImages')
+        if (!Array.isArray(inObj)) return
+  
+        return knex.transaction(trx => {
+            let queries = inObj.map(tuple => 
+                trx.raw(
+                    trx("images").where(tuple).first("alt","src","placeId","objectId","userId").toString()
+                )               
+                .transacting(trx)
+            )
+            return Promise.all(queries).then(trx.commit).catch(trx.rollback)
+        })
     }
 }
 

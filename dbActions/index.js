@@ -27,7 +27,6 @@ app.post('/create', (req, res) => {
         .then(() => res.sendStatus(200))
 })
 app.post('/addUser', (req, res) => {
-    console.log('add user')
     store
         .addUser({
             userName: req.body.userName,
@@ -121,7 +120,8 @@ app.post('/updatePlace', (req, res) => {
         exits: req.body.exits,
         poi: JSON.stringify(req.body.poi),
         objects: req.body.objects,
-        images: req.body.images
+        images: req.body.images,
+        audio: req.body.audio
     }).then((place) => res.status(200).json(place))
 })
 app.post('/loadDefaultPlace', (req,res) => {
@@ -139,7 +139,8 @@ app.post('/addObject', (req,res) => {
         description: req.body.description, 
         isRoot: req.body.isRoot, 
         actionStack: req.body.actionStack,
-        images: req.body.images
+        images: req.body.images,
+        auth: req.body.auth
     }).then((objectId) => res.status(200).json(objectId))
 })
 app.post('/loadUserObjects', (req,res) => {
@@ -157,7 +158,8 @@ app.post('/updateObject', (req, res) => {
         description: req.body.description,
         isRoot: req.body.isRoot,
         actionStack: req.body.actionStack,
-        images: req.body.images
+        images: req.body.images,
+        auth: req.body.auth
     }).then((response) => res.status(200).json(response))
 })
 app.post('/deleteObject', (req, res) => {
@@ -169,17 +171,36 @@ app.post('/deleteObject', (req, res) => {
         res.status(200).json(response)
     })
 })
+app.post('/loadImages', (req,res) => {
+    store
+    .loadImages({
+        inObj: req.body.inObj
+    }).then(response => {
+
+        const finalResponse = []
+        response.forEach(item => {
+            finalResponse.push(item[0][0])
+        })
+        res.status(200).json(finalResponse)
+    })
+})
 io.on('connection', (socket) => {
     console.log('a user connected');
     socket.on("incoming data", (data)=>{
-        console.log('incoming data')
-        //console.log(data)
+
         //the order is important here
-        const type = typeof(data.stateData) === 'object' ? 'userStateData' : data.objectId ? 'object' : data.placeId ? 'place' : data.spaceId ? 'space' : data.userId ? 'user' : 'msg'
+        const type = typeof(data.type) !== 'undefined' ? data.type : typeof(data.stateData) === 'object' ? 'userStateData' : data.objectId ? 'object' : data.placeId ? 'place' : data.spaceId ? 'space' : data.userId ? 'user' : 'msg'
         //Here we broadcast it out to all other sockets EXCLUDING the socket which sent us the data
-       if (type === 'msg') {
+       if (type === 'auth') {
+           store.checkAuth({userId: data.userId, inAuth: data.auth}).then(response => {
+               const retObj = {type:'auth',isAuth: response}
+               const channel = `auth:${data.userId}`
+               socket.emit(channel, retObj)
+           })
+       }
+       else if (type === 'msg') {
         const channel = `place:${data.msgPlaceId}`
-        console.log(channel)
+
         socket.broadcast.emit(channel, {msg: data})
        } else if (type === 'place') {
         socket.broadcast.emit("outgoing data", {[type]: data});
@@ -187,7 +208,13 @@ io.on('connection', (socket) => {
            store.updateUserStateData({
                userId: data.userId,
                stateData: data.stateData
-           }).then(response => {})
+           }).then(response => {
+               if (typeof(data.auth) !== 'undefined')
+               store.updateUserAuth({
+                   userId: data.userId,
+                   auth: data.auth
+               }).then(response => {})
+           })
        }
        else socket.broadcast.emit("outgoing data", {[type]: data});
     });
