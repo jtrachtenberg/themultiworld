@@ -109,17 +109,24 @@ function handleImages(images,userId,spaceId,placeId,objectId) {
 module.exports = {
     checkAuth({userId, inAuth}) {
         let isAuth = true
+        let isEdit = true
         const authType = typeof(inAuth.type) !== 'undefined' ? inAuth.type : inAuth.objectId ? 'object' : inAuth.placeId ? 'place' : inAuth.spaceId ? 'space' : inAuth.userId ? 'user' : 'msg'
         const chkTable = authType+'s'
         const chkColumn = authType+'Id'
         const chkColumnValue = inAuth[chkColumn]
-
-        return knex('users').leftJoin(chkTable,`${chkTable}.${chkColumn}`,'=',chkColumnValue).where({'users.userId': userId}).select(`${chkTable}.${chkColumn}`,`${chkTable}.authType`, `${chkTable}.title`,'users.isRoot','users.auth').then ( (rows) => {
+        //select users.userId as creatorUserId, u2.auth as userAuth, places.placeId, places.authType, places.title from users left join spaces on users.userId = spaces.userId left join places on places.spaceId = spaces.spaceId right join users as u2 on u2.userId=76 where placeId=18
+        return knex('users').leftJoin('spaces',"spaces.userId","=","users.userId").leftJoin(chkTable,`${chkTable}.spaceId`,'=','spaces.spaceId').rightJoin(`users as u2`,`u2.userId`,`=`,userId).where(`${chkTable}.${chkColumn}`, chkColumnValue).select(`${chkTable}.${chkColumn}`,`${chkTable}.authType`, `${chkTable}.title`,'u2.isRoot','u2.auth','users.userId').then ( (rows) => {
             rows.forEach((row,i) => {
-                row.auth = JSON.parse(row.auth)
+                row.auth = JSON.parse(row.auth) 
 
-                if (row.isRoot) row.isAuth = isAuth && true
-                else if (row.authType === 0) row.isAuth = isAuth && true
+                if (row.isRoot) {
+                    row.isAuth = true
+                    row.isEdit = true
+                }
+                else if (row.authType === 0) {
+                    row.isAuth = true
+                    row.isEdit = row.userId === userId ? isEdit && true : false
+                }
                 else if (Array.isArray(row.auth)) {
                     //Check if user is authorized
                     let found = false
@@ -128,9 +135,14 @@ module.exports = {
                             item = JSON.parse(item)
                         return item[chkColumn] === chkColumnValue
                     })
-                    if (typeof(element) !== 'undefined') found = true
+                    if (typeof(element) !== 'undefined') {
+                        found = true
+                        if (element.edit) row.isEdit = true
+                        else row.isEdit = false
+                    } else row.isEdit = false
                     
                     row.isAuth = isAuth && found
+                    
                 }
                 else row.isAuth = false
 
