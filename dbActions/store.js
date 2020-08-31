@@ -1,6 +1,7 @@
 const crypto = require('crypto')
 const knex = require('knex')(require('./knexfile'))
 const util = require('util')
+const jwt = require('jsonwebtoken');
 
 var pos= require('pos');
 
@@ -122,6 +123,7 @@ module.exports = {
                 if (row.isRoot) {
                     row.isAuth = true
                     row.isEdit = true
+                    row.isAdmin = true
                 }
                 else if (row.authType === 0) {
                     row.isAuth = true
@@ -217,9 +219,18 @@ module.exports = {
         const checkVal = columnCheck === 'email' ? email : userName
         console.log(`login ${columnCheck} with ${checkVal}`)
         if (columnCheck === 'email')
-            return knex('users').whereRaw('email = ? AND sha2(concat(salt,?),512) = password',[checkVal,password]).first('userId','userName','email','description','isRoot','stateData')
+            return knex('users').whereRaw('email = ? AND sha2(concat(salt,?),512) = password',[checkVal,password]).first('userId','userName','email','description','stateData','salt').then(user => {
+ 
+                const token = jwt.sign(
+                    { userId: user.userId },
+                    user.salt,
+                    { expiresIn: '24h' })
+                user.token = token
+                delete user.salt
+                return user
+            })
         else
-        return knex('users').whereRaw('userName = ? AND sha2(concat(salt,?),512) = password',[checkVal,password]).first('userId','userName','email','description','isRoot','stateData')
+        return knex('users').whereRaw('userName = ? AND sha2(concat(salt,?),512) = password',[checkVal,password]).first('userId','userName','email','description','stateData')
     },
     addSpace({userId,title,description,isRoot}) {
         console.log(`Add space ${title} with userId ${userId}`)

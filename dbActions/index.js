@@ -1,6 +1,6 @@
 const express = require('express')
 const bodyParser = require('body-parser')
-
+const auth = require('./auth');
 const store = require('./store')
 
 const app = express()
@@ -12,21 +12,14 @@ app.use(bodyParser.json())
 
 app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    res.header('Access-Control-Expose-Headers', 'Authorization')
     next();
   });
 app.get('/', (req, res) => {
     res.sendStatus(200)
 })
-app.post('/create', (req, res) => {
-    store
-        .create({
-            item1: req.body.item1,
-            item2: req.body.item2
-        })
-        .then(() => res.sendStatus(200))
-})
-app.post('/addUser', (req, res) => {
+app.post('/addUser', auth, (req, res) => {
     store
         .addUser({
             userName: req.body.userName,
@@ -36,7 +29,7 @@ app.post('/addUser', (req, res) => {
         })
         .then((userId) => res.status(200).json(userId))
 })
-app.post('/updateUser', (req, res) => {
+app.post('/updateUser', auth, (req, res) => {
     store
         .updateUser({
             userId: req.body.userId,
@@ -56,7 +49,7 @@ app.post('/loginUser', (req, res) => {
         })
         .then((user) => res.status(200).json(user))
 })
-app.post('/addSpace', (req, res) => {
+app.post('/addSpace', auth, (req, res) => {
     store
         .addSpace({
             userId: req.body.userId,
@@ -66,7 +59,7 @@ app.post('/addSpace', (req, res) => {
         })
         .then((spaceId) => res.status(200).json(spaceId))
 })
-app.post('/updateSpace', (req, res) => {
+app.post('/updateSpace', auth, (req, res) => {
     store
         .updateSpace({
             spaceId: req.body.spaceId,
@@ -77,21 +70,21 @@ app.post('/updateSpace', (req, res) => {
         })
         .then((spaceId) => res.status(200).json(spaceId))
 })
-app.post('/loadSpaces', (req, res) => {
+app.post('/loadSpaces', auth, (req, res) => {
     store
         .loadSpaces({
             userId: req.body.userId
         })
         .then((spaces) => res.status(200).json(spaces))
 })
-app.post('/loadPlaces', (req, res) => {
+app.post('/loadPlaces', auth, (req, res) => {
     store
         .loadPlaces({
             spaceId: req.body.spaceId
         })
         .then((places) => res.status(200).json(places))
 })
-app.post('/addPlace', (req, res) => {
+app.post('/addPlace', auth, (req, res) => {
     store
         .addPlace({
             spaceId: req.body.spaceId,
@@ -102,14 +95,14 @@ app.post('/addPlace', (req, res) => {
         })
         .then((placeId) => res.status(200).json(placeId))
 })
-app.post('/loadPlace', (req, res) => {
+app.post('/loadPlace', auth, (req, res) => {
     store
         .loadPlace({
             placeId: req.body.placeId
         })
         .then((place) => res.status(200).json(place))
 })
-app.post('/updatePlace', (req, res) => {
+app.post('/updatePlace', auth, (req, res) => {
     store
        .updatePlace({
         spaceId: req.body.spaceId,
@@ -125,13 +118,13 @@ app.post('/updatePlace', (req, res) => {
         audio: req.body.audio
     }).then((place) => res.status(200).json(place))
 })
-app.post('/loadDefaultPlace', (req,res) => {
+app.post('/loadDefaultPlace', auth, (req,res) => {
     store
     .loadDefaultPlace({
         userName: req.body.userName
     }).then((place) => res.status(200).json(place))
 })
-app.post('/addObject', (req,res) => {
+app.post('/addObject', auth, (req,res) => {
     store
     .addObject({
         userId: req.body.userId, 
@@ -144,13 +137,13 @@ app.post('/addObject', (req,res) => {
         auth: req.body.auth
     }).then((objectId) => res.status(200).json(objectId))
 })
-app.post('/loadUserObjects', (req,res) => {
+app.post('/loadUserObjects', auth, (req,res) => {
     store
     .loadUserObjects({
         userId: req.body.userId
     }).then((objects) => res.status(200).json(objects))
 })
-app.post('/updateObject', (req, res) => {
+app.post('/updateObject', auth, (req, res) => {
     store
     .updateObject({
         objectId: req.body.objectId,
@@ -163,7 +156,7 @@ app.post('/updateObject', (req, res) => {
         auth: req.body.auth
     }).then((response) => res.status(200).json(response))
 })
-app.post('/deleteObject', (req, res) => {
+app.post('/deleteObject', auth, (req, res) => {
     store
     .deleteObject({
         objectId: req.body.objectId
@@ -172,7 +165,7 @@ app.post('/deleteObject', (req, res) => {
         res.status(200).json(response)
     })
 })
-app.post('/loadImages', (req,res) => {
+app.post('/loadImages', auth, (req,res) => {
     store
     .loadImages({
         inObj: req.body.inObj
