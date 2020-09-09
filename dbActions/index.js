@@ -178,6 +178,12 @@ app.post('/loadImages', auth, (req,res) => {
         res.status(200).json(finalResponse)
     })
 })
+app.post('/getPopulation', auth, (req,res) => {
+    store
+    .getPopulation({
+        placeId: req.body.placeId
+    }).then(response => res.status(200).json(response))
+})
 io.on('connection', (socket) => {
     console.log('a user connected');
     socket.on("incoming data", (data)=>{
@@ -208,6 +214,11 @@ io.on('connection', (socket) => {
                    userId: data.userId,
                    auth: data.auth
                }).then(response => {})
+               store.updatePopulation({
+                   userId: data.userId,
+                   currentRoom: data.stateData.currentRoom,
+                   newRoom: data.stateData.newRoom
+               })
            })
        }
        else socket.broadcast.emit("outgoing data", {[type]: data});
