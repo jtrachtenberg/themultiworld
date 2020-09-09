@@ -195,7 +195,6 @@ module.exports = {
 
         return knex('users').where({userId: userId}).select("auth").then(rows => {
             const row = rows[0]
-//                const actionStack = JSON.parse(object.actionStack.replace(/\\/g, ""))
 
             if (typeof(row.auth) === 'string') row.auth= JSON.parse(row.auth.replace(/\\/g, ""))
             const currentAuth = (row.auth === null || typeof(row.auth) === 'undefined') ? [] : row.auth
@@ -457,6 +456,41 @@ module.exports = {
             )
             return Promise.all(queries).then(trx.commit).catch(trx.rollback)
         })
+    },
+    updatePopulation({userId,currentRoom,newRoom}) {
+        if (typeof newRoom === 'undefined') {//place them in the currentRoom
+            return knex("population").where({placeId: currentRoom}).select('people').then(rows => {
+                if (rows.length === 0) {
+                    const people = [userId]
+                    return knex("population").insert({placeId: currentRoom,people: JSON.stringify(people)}).returning('populationId')
+                } else {
+                    let people = rows[0].people
+                    if (typeof people === 'string') people = JSON.parse(people)
+
+                    if (typeof people.find(inUserId => inUserId === userId) === 'undefined') {
+                        people.push(userId)
+                        return knex("population").update({people: JSON.stringify(people)}).where({placeId: currentRoom})
+                    }
+                }
+            })
+        } else {//remove from old room
+            return knex("population").where({placeId: currentRoom}).select('people').then(rows => {
+                if (rows.length === 0) {
+                    return rows
+                }
+                let people = rows[0].people
+                if (typeof people === 'string') people = JSON.parse(people)
+                if (typeof people.find(inUserId => inUserId === userId) !== 'undefined') {
+                    people = people.filter(id => id !== userId)
+                    return knex("population").update({people: JSON.stringify(people)}).where({placeId: currentRoom})
+                }
+            })
+        }
+
+    },
+    getPopulation ({placeId}) {
+        //select users.userId, users.userName from population left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),CAST(users.userId as JSON), '$')
+        return knex("population").joinRaw("left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),CAST(users.userId as JSON), '$')").where({placeId: placeId}).select('users.userId','users.userName')
     }
 }
 

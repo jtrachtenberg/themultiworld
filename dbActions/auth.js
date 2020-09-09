@@ -3,7 +3,6 @@ const knex = require('knex')(require('./knexfile'))
 
 module.exports = async (req, res, next) => {
   try {
-    console.log(req.headers)
     const token = req.headers.authorization.split(' ')[1];
     const userId = req.body.userId
     let checkUserId
