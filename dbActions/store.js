@@ -458,7 +458,20 @@ module.exports = {
         })
     },
     updatePopulation({userId,currentRoom,newRoom}) {
-        if (typeof newRoom === 'undefined') {//place them in the currentRoom
+
+        if (typeof newRoom !== 'undefined') {//remove from old room
+            return knex("population").where({placeId: currentRoom}).select('people').then(rows => {
+                if (rows.length === 0) {
+                    return rows
+                }
+                let people = rows[0].people
+                if (typeof people === 'string') people = JSON.parse(people)
+                if (typeof people.find(inUserId => inUserId === userId) !== 'undefined') {
+                    people = people.filter(id => id !== userId)
+                    return knex("population").update({people: JSON.stringify(people)}).where({placeId: currentRoom})
+                }
+            })
+        } else {//place them in the currentRoom
             return knex("population").where({placeId: currentRoom}).select('people').then(rows => {
                 if (rows.length === 0) {
                     const people = [userId]
@@ -473,20 +486,7 @@ module.exports = {
                     }
                 }
             })
-        } else {//remove from old room
-            return knex("population").where({placeId: currentRoom}).select('people').then(rows => {
-                if (rows.length === 0) {
-                    return rows
-                }
-                let people = rows[0].people
-                if (typeof people === 'string') people = JSON.parse(people)
-                if (typeof people.find(inUserId => inUserId === userId) !== 'undefined') {
-                    people = people.filter(id => id !== userId)
-                    return knex("population").update({people: JSON.stringify(people)}).where({placeId: currentRoom})
-                }
-            })
         }
-
     },
     getPopulation ({placeId}) {
         //select users.userId, users.userName from population left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),CAST(users.userId as JSON), '$')
