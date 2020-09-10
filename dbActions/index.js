@@ -205,7 +205,6 @@ io.on('connection', (socket) => {
        } else if (type === 'place') {
         socket.broadcast.emit("outgoing data", {[type]: data});
        } else if (type === 'userStateData') {
-           console.log(data)
            store.updateUserStateData({
                userId: data.userId,
                stateData: data.stateData
