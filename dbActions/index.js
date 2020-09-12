@@ -184,6 +184,7 @@ app.post('/getPopulation', auth, (req,res) => {
         placeId: req.body.placeId
     }).then(response => res.status(200).json(response))
 })
+var users = {}
 io.on('connection', (socket) => {
     console.log('a user connected');
     socket.on("incoming data", (data)=>{
@@ -192,6 +193,7 @@ io.on('connection', (socket) => {
         const type = typeof(data.type) !== 'undefined' ? data.type : typeof(data.stateData) === 'object' ? 'userStateData' : data.objectId ? 'object' : data.placeId ? 'place' : data.spaceId ? 'space' : data.userId ? 'user' : 'msg'
         //Here we broadcast it out to all other sockets EXCLUDING the socket which sent us the data
        if (type === 'auth') {
+           users[socket.id] = data.userId
            store.checkAuth({userId: data.userId, inAuth: data.auth}).then(response => {
                const retObj = {type:'auth',isAuth: response}
                const channel = `auth:${data.userId}`
@@ -225,6 +227,11 @@ io.on('connection', (socket) => {
     });
     socket.on('disconnect', () => {
         console.log('user disconnected');
+        store.logout({userId: users[socket.id]}).then(response => {
+            const channel = `place:${response.placeId}`
+            const data = {msg: `disapparated.`, exit:true, msgPlaceId: response.placeId, userName: response.userName}
+            socket.broadcast.emit(channel, {msg: data})
+        })
     });
 });
 

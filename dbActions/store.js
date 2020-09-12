@@ -211,6 +211,29 @@ module.exports = {
             return knex('users').where({userId: userId}).update({ auth: JSON.stringify(currentAuth) }).returning('userId')   
         })
     },
+    logout({userId}) {
+
+        if (typeof userId === 'undefined') return new Promise(resolve => resolve(false))
+
+        return knex("users").where({userId:userId}).first("stateData","userName").then(outerrows => {
+            if (Object.keys(outerrows).length === 0) return new Promise(resolve => resolve(false))
+            const stateData = typeof outerrows.stateData === 'string' ? JSON.parse(outerrows.stateData) : outerrows.stateData
+            if (typeof stateData.currentRoom === 'undefined') return new Promise(resolve => resolve(false))
+            return knex("population").where({placeId: stateData.currentRoom}).select('people').then(rows => {
+                if (rows.length === 0) {
+                    return rows
+                }
+                let people = rows[0].people
+                if (typeof people === 'string') people = JSON.parse(people)
+                if (typeof people.find(inUserId => inUserId === userId) !== 'undefined') {
+                    people = people.filter(id => id !== userId)
+                    return knex("population").update({people: JSON.stringify(people)},['placeId']).where({placeId: stateData.currentRoom}).then(response => {
+                        return new Promise(resolve => resolve({placeId: stateData.currentRoom, userName: outerrows.userName}) )
+                    })
+                }
+            })
+        })
+    },
     login({userName,email,password}) {
         userName=userName||""
         email=email||""
