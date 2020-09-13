@@ -189,13 +189,12 @@ io.on('connection', (socket) => {
     console.log(socket.id);
     if (typeof users[socket.id] !== 'undefined') store.repopulate({userId: users[socket.id]})
     socket.on("incoming data", (data)=>{
-        
+        console.log(data)
         //the order is important here
         const type = typeof(data.type) !== 'undefined' ? data.type : typeof(data.stateData) === 'object' ? 'userStateData' : data.objectId ? 'object' : data.placeId ? 'place' : data.spaceId ? 'space' : data.userId ? 'user' : 'msg'
         //Here we broadcast it out to all other sockets EXCLUDING the socket which sent us the data
        if (type === 'auth') {
-           console.log(socket.id)
-           console.log(data.userId)
+           if (data.userId === 0) return
            users[socket.id] = data.userId
            store.checkAuth({userId: data.userId, inAuth: data.auth}).then(response => {
                const retObj = {type:'auth',isAuth: response}
@@ -210,19 +209,24 @@ io.on('connection', (socket) => {
        } else if (type === 'place') {
         socket.broadcast.emit("outgoing data", {[type]: data});
        } else if (type === 'userStateData') {
+           const logout = data.stateData.logout
+
            store.updateUserStateData({
                userId: data.userId,
                stateData: data.stateData
            }).then(response => {
+               console.log(response)
                if (typeof(data.auth) !== 'undefined')
-               store.updateUserAuth({
-                   userId: data.userId,
-                   auth: data.auth
-               }).then(response => {})
+                store.updateUserAuth({
+                    userId: data.userId,
+                    auth: data.auth
+                }).then(response => {})
+               console.log('pop')
                store.updatePopulation({
                    userId: data.userId,
                    currentRoom: data.stateData.currentRoom,
-                   newRoom: data.stateData.newRoom
+                   newRoom: data.stateData.newRoom,
+                   logout: logout
                })
            })
        }
