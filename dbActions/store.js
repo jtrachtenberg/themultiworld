@@ -211,6 +211,14 @@ module.exports = {
             return knex('users').where({userId: userId}).update({ auth: JSON.stringify(currentAuth) }).returning('userId')   
         })
     },
+    repopulate({userId}) {
+        if (typeof userId === 'undefined') return new Promise(resolve => resolve(false))
+        return knex("users").where({userId:userId}).first("stateData","userName").then(outerrows => {
+            if (Object.keys(outerrows).length === 0) return new Promise(resolve => resolve(false))
+            return updatePopulation({userId:userId,currentRoom:outerrows.stateData.currentRoom})
+        })
+
+    },
     logout({userId}) {
 
         if (typeof userId === 'undefined') return new Promise(resolve => resolve(false))
