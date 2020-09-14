@@ -1,8 +1,8 @@
 module.exports = {
     client: 'mysql',
     connection: {
-      user: 'root',
-      password: 'password',
+      user: process.env.DB_USER||'root',
+      password: process.env.DB_PASSWORD||'password',
       database: 'tmw',
       debug: false,
       typeCast: function (field, next) {
