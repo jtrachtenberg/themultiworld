@@ -186,14 +186,20 @@ app.post('/getPopulation', auth, (req,res) => {
 })
 var users = {}
 io.on('connection', (socket) => {
-    console.log(socket.id);
+    console.log('user connected')
     if (typeof users[socket.id] !== 'undefined') store.repopulate({userId: users[socket.id]})
     socket.on("incoming data", (data)=>{
-        console.log(data)
         //the order is important here
         const type = typeof(data.type) !== 'undefined' ? data.type : typeof(data.stateData) === 'object' ? 'userStateData' : data.objectId ? 'object' : data.placeId ? 'place' : data.spaceId ? 'space' : data.userId ? 'user' : 'msg'
         //Here we broadcast it out to all other sockets EXCLUDING the socket which sent us the data
-       if (type === 'auth') {
+       if (type === 'admin') {
+           store[data.cmd]({userId: data.userId}).then(response => {
+               const retObj = {type:'admin',admincmd:data.admincmd,cmd:data.cmd,response:response}
+               const channel = `auth:${data.userId}`
+               socket.emit(channel, retObj)
+           })
+       }
+       else if (type === 'auth') {
            if (data.userId === 0) return
            users[socket.id] = data.userId
            store.checkAuth({userId: data.userId, inAuth: data.auth}).then(response => {
@@ -215,13 +221,11 @@ io.on('connection', (socket) => {
                userId: data.userId,
                stateData: data.stateData
            }).then(response => {
-               console.log(response)
                if (typeof(data.auth) !== 'undefined')
                 store.updateUserAuth({
                     userId: data.userId,
                     auth: data.auth
                 }).then(response => {})
-               console.log('pop')
                store.updatePopulation({
                    userId: data.userId,
                    currentRoom: data.stateData.currentRoom,

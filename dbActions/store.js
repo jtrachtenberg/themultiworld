@@ -492,6 +492,16 @@ module.exports = {
             return Promise.all(queries).then(trx.commit).catch(trx.rollback)
         })
     },
+    getAdminPopulation({userId}) {
+        //select placeId, people from population where people NOT LIKE '%[]%'
+        const DB = process.env.DB_TYPE || 'mysql'
+        const joinRaw = DB === 'MariaDB' ? "left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),users.userId, '$')" : "left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),CAST(users.userId as JSON), '$')"
+        return knex("population").leftJoin(`users as u2`,`u2.userId`,`=`,userId).joinRaw(joinRaw).where("people","NOT LIKE",'%[]%').select("population.placeId","population.people","u2.isRoot","users.userName").then(response => {
+            if (response.length === 0) return response
+            if (response[0].isRoot === 1) return response
+            else return new Promise(resolve => resolve('Unauthorized'))
+        })
+    },
     updatePopulation({userId,currentRoom,newRoom,logout}) {
         logout = logout||false
         if (!logout && typeof newRoom === 'undefined') {//place them in the currentRoom
