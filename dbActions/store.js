@@ -109,6 +109,7 @@ function handleImages(images,userId,spaceId,placeId,objectId) {
 
 module.exports = {
     checkAuth({userId, inAuth}) {
+        console.log('checkAuth')
         let isAuth = true
         let isEdit = true
         const authType = typeof(inAuth.type) !== 'undefined' ? inAuth.type : inAuth.objectId ? 'object' : inAuth.placeId ? 'place' : inAuth.spaceId ? 'space' : inAuth.userId ? 'user' : 'msg'
@@ -183,10 +184,12 @@ module.exports = {
     },
     updateUserStateData({userId,stateData}) {
         stateData = stateData||{}
+        delete stateData.logout
         stateData = JSON.stringify(stateData)
 
         return knex('users').where({userId: userId}).update({
-            stateData: stateData
+            stateData: stateData,
+            updated_at: new Date()
         }).returning('userId')
     },
     updateUserAuth({userId,auth}) {
@@ -433,6 +436,7 @@ module.exports = {
         })
     },
     loadUserObjects({userId}) {
+        console.log('loadUserObjects')
         return knex('objects').leftJoin('images','images.objectId','=','objects.objectId').where('objects.userId',userId).andWhere('objects.isRoot',1).select('objects.objectId','objects.title','objects.description','objects.actionStack','objects.auth','images.src','images.alt','images.externalId','images.apilink')
         .then((rows) => {
             rows.forEach((row,i) => {
@@ -488,9 +492,19 @@ module.exports = {
             return Promise.all(queries).then(trx.commit).catch(trx.rollback)
         })
     },
-    updatePopulation({userId,currentRoom,newRoom}) {
-
-        if (typeof newRoom === 'undefined') {//place them in the currentRoom
+    getAdminPopulation({userId}) {
+        //select placeId, people from population where people NOT LIKE '%[]%'
+        const DB = process.env.DB_TYPE || 'mysql'
+        const joinRaw = DB === 'MariaDB' ? "left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),users.userId, '$')" : "left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),CAST(users.userId as JSON), '$')"
+        return knex("population").leftJoin(`users as u2`,`u2.userId`,`=`,userId).joinRaw(joinRaw).where("people","NOT LIKE",'%[]%').select("population.placeId","population.people","u2.isRoot","users.userName").then(response => {
+            if (response.length === 0) return response
+            if (response[0].isRoot === 1) return response
+            else return new Promise(resolve => resolve('Unauthorized'))
+        })
+    },
+    updatePopulation({userId,currentRoom,newRoom,logout}) {
+        logout = logout||false
+        if (!logout && typeof newRoom === 'undefined') {//place them in the currentRoom
             return knex("population").where({placeId: currentRoom}).select('people').then(rows => {
                 if (rows.length === 0) {
                     const people = [userId]
