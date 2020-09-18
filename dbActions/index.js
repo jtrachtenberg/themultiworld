@@ -192,7 +192,13 @@ io.on('connection', (socket) => {
         //the order is important here
         const type = typeof(data.type) !== 'undefined' ? data.type : typeof(data.stateData) === 'object' ? 'userStateData' : data.objectId ? 'object' : data.placeId ? 'place' : data.spaceId ? 'space' : data.userId ? 'user' : 'msg'
         //Here we broadcast it out to all other sockets EXCLUDING the socket which sent us the data
-       if (type === 'admin') {
+       if (type === 'search') {
+           store.search({search: data.search, term: data.term}).then(response => {
+            const retObj = {type:'search',response:response}
+            const channel = `search:${data.userId}`
+            socket.emit(channel, retObj)
+           })
+       } else if (type === 'admin') {
            store[data.cmd]({userId: data.userId}).then(response => {
                const retObj = {type:'admin',admincmd:data.admincmd,cmd:data.cmd,response:response}
                const channel = `auth:${data.userId}`

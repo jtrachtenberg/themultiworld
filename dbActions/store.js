@@ -245,6 +245,10 @@ module.exports = {
             })
         })
     },
+    search({search, term}) {
+        //select spaces.spaceId, spaces.title,places.placeId from spaces join places on spaces.spaceId = places.spaceId where places.isRoot=1 AND spaces.title like 'j%'
+        return knex('spaces').join('places','spaces.spaceId','=','places.spaceId').where('places.isRoot','=','1').andWhere('spaces.title','like',`${term}%`).limit(10).select("spaces.spaceId","spaces.title","places.placeId")
+    },
     login({userName,email,password}) {
         userName=userName||""
         email=email||""
