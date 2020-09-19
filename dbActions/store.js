@@ -172,6 +172,15 @@ module.exports = {
         })
         return retVal
     },
+    addFaction({userId,name}) {
+        return knex('npcFactions').insert({
+            userId: userId,
+            name: name
+        })
+    },
+    getFactions({userId}) {
+        return knex('npcFactions').where({userId: userId}).select('factionId','name','stateData')
+    },
     updateUser({userId,userName,email,description,isRoot}) {
         console.log(`update user ${userId} with email ${email}`)
         return knex('users').where({userId: userId}).update({

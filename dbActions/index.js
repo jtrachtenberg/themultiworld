@@ -2,7 +2,8 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const auth = require('./auth');
 const store = require('./store')
-const interval = require('./interval')
+const interval = require('./interval');
+const { resolveSoa } = require('dns');
 const app = express()
 var http = require('http').createServer(app)
 var io = require('socket.io')(http)
@@ -182,6 +183,19 @@ app.post('/getPopulation', auth, (req,res) => {
     store
     .getPopulation({
         placeId: req.body.placeId
+    }).then(response => res.status(200).json(response))
+})
+app.post('/addFaction', auth, (req,res) => {
+    store
+    .addFaction({
+        userId: req.body.userId,
+        name: req.body.name
+    }).then(response => res.status(200).json(response))
+})
+app.post('/getFactions', auth, (req, res) => {
+    store
+    .getFactions({
+        userId: req.body.userId
     }).then(response => res.status(200).json(response))
 })
 var users = {}
