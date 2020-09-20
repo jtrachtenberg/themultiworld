@@ -2,7 +2,8 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const auth = require('./auth');
 const store = require('./store')
-
+const interval = require('./interval');
+const { resolveSoa } = require('dns');
 const app = express()
 var http = require('http').createServer(app)
 var io = require('socket.io')(http)
@@ -184,6 +185,33 @@ app.post('/getPopulation', auth, (req,res) => {
         placeId: req.body.placeId
     }).then(response => res.status(200).json(response))
 })
+app.post('/addFaction', auth, (req,res) => {
+    store
+    .addFaction({
+        userId: req.body.userId,
+        name: req.body.name
+    }).then(response => res.status(200).json(response))
+})
+app.post('/getFactions', auth, (req, res) => {
+    store
+    .getFactions({
+        userId: req.body.userId
+    }).then(response => res.status(200).json(response))
+})
+app.post('/addScript', auth, (req,res) => {
+    store
+    .addScript({
+        userId: req.body.userId,
+        name: req.body.name,
+        script: req.body.script
+    }).then(response => res.status(200).json(response))
+})
+app.post('/getScripts', auth, (req, res) => {
+    store
+    .getScripts({
+        userId: req.body.userId
+    }).then(response => res.status(200).json(response))
+})
 var users = {}
 io.on('connection', (socket) => {
     console.log('user connected')
@@ -254,6 +282,7 @@ io.on('connection', (socket) => {
 
 var server = http.listen(8880, () => {
     console.log('Server running on localhost:8880')
+    const intervalObj = setInterval(interval.checkTimedEvents,10000,io)
 })
 //Needed for Unit Testing
 module.exports = server
