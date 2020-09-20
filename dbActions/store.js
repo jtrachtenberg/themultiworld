@@ -181,6 +181,16 @@ module.exports = {
     getFactions({userId}) {
         return knex('npcFactions').where({userId: userId}).select('factionId','name','stateData')
     },
+    addScript({userId,name,script}) {
+        return knex('npcFactions').insert({
+            userId: userId,
+            name: name,
+            script: script
+        })
+    },
+    getScripts({userId}) {
+        return knex('npcScripts').where({userId: userId}).select('scriptId','name','script')
+    },
     updateUser({userId,userName,email,description,isRoot}) {
         console.log(`update user ${userId} with email ${email}`)
         return knex('users').where({userId: userId}).update({
@@ -416,8 +426,13 @@ module.exports = {
         auth=auth||[]
 
         console.log(`Create Object ${title}`)
-        actionStack = JSON.stringify(actionStack)
-        auth = JSON.stringify(auth)
+        if (typeof actionStack === 'object') {
+            if (actionStack.type && actionStack.type == 'NPC') {
+                
+            }
+        }
+            actionStack = JSON.stringify(actionStack)
+            auth = JSON.stringify(auth)
         var objectId = knex('objects').insert({
             userId,title,description,isRoot,actionStack,auth
         }).then(response => handleImages(images,null,null,null,response[0]))

@@ -198,6 +198,20 @@ app.post('/getFactions', auth, (req, res) => {
         userId: req.body.userId
     }).then(response => res.status(200).json(response))
 })
+app.post('/addScript', auth, (req,res) => {
+    store
+    .addScript({
+        userId: req.body.userId,
+        name: req.body.name,
+        script: req.body.script
+    }).then(response => res.status(200).json(response))
+})
+app.post('/getScripts', auth, (req, res) => {
+    store
+    .getScripts({
+        userId: req.body.userId
+    }).then(response => res.status(200).json(response))
+})
 var users = {}
 io.on('connection', (socket) => {
     console.log('user connected')
