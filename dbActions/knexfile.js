@@ -6,7 +6,7 @@ module.exports = {
       database: 'tmw',
       debug: false,
       typeCast: function (field, next) {
-        if ( (field.type === 'JSON' || field.type === 'BLOB') && (field.name === 'poi' || field.name === 'exits' || field.name === 'stateData' || field.name === 'objects')) {
+        if ( (field.type === 'JSON' || field.type === 'BLOB') && (field.name === 'poi' || field.name === 'exits' || field.name === 'stateData' || field.name === 'objects'|| field.name === 'eventData' || field.name === 'actionStack' || field.name === 'people')) {
           return (JSON.parse(field.string()))
         }
         return next()

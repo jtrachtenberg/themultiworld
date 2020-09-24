@@ -3,7 +3,6 @@ const bodyParser = require('body-parser')
 const auth = require('./auth');
 const store = require('./store')
 const interval = require('./interval');
-const { resolveSoa } = require('dns');
 const app = express()
 var http = require('http').createServer(app)
 var io = require('socket.io')(http)
@@ -282,7 +281,7 @@ io.on('connection', (socket) => {
 
 var server = http.listen(8880, () => {
     console.log('Server running on localhost:8880')
-    const intervalObj = setInterval(interval.checkTimedEvents,10000,io)
+    const intervalObj = setInterval(interval.worldTick,10000,io)
 })
 //Needed for Unit Testing
 module.exports = server
