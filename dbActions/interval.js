@@ -27,7 +27,7 @@ module.exports = {
                     if (eventData.type === 'behaviors') {//NPC Behaviors
                         const behaviors = eventData.behaviors
                         utilFunctions.didItHappen({max: 20,min:behaviors.advent}).then(response => {
-                            if (response) {
+                            if (response && Array.isArray(row.exits) && row.exits.length > 0) {
                                 utilFunctions.diceRoll({max:row.exits.length,mod:1}).then(async (exitNum) => {
                                     const exit = row.exits[exitNum-1]
                                     const newPlaceId = exit[Object.keys(exit)[0]].placeId
