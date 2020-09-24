@@ -379,6 +379,7 @@ module.exports = {
             let audio = []
 
             rows.forEach((row,i) => {
+                row.objects = row.objects||[]
                
                 if (i === 0) {
                     retVal = row
