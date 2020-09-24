@@ -189,7 +189,7 @@ module.exports = {
         })
     },
     getScripts({userId}) {
-        return knex('npcScripts').where({userId: userId}).select('scriptId','name','script')
+        return knex('npcScript').where({userId: userId}).select('scriptId','name','script')
     },
     updateUser({userId,userName,email,description,isRoot}) {
         console.log(`update user ${userId} with email ${email}`)
@@ -346,14 +346,16 @@ module.exports = {
         audio = audio||[]
 
         objects = objects||[]
-        objects = JSON.stringify(objects)
+        objects = objects.filter(object => object.type !== 'NPC')
+        console.log('objects',objects)
         if (Array.isArray(images))
             handleImages(images,null,null,placeId,null)
 
         if (Array.isArray(audio))
             handleAudio(audio,null,null,placeId,null)
 
-        var retVal = knex('places').where({placeId: placeId}).update({
+        objects = JSON.stringify(objects)
+        return knex('places').where({placeId: placeId}).update({
             title: title,
             description: description,
             isRoot: isRoot,
@@ -363,7 +365,6 @@ module.exports = {
             authType: authType,
             updated_at: new Date()
         }).returning('placeId')
-        return retVal
     },
     loadSpaces({userId}) {
         return knex('spaces').where({userId: userId}).select('spaceId','title','description','isRoot')
@@ -371,11 +372,12 @@ module.exports = {
     loadPlace({placeId}) {
         console.log(`loadPlace ${placeId}`)
         //handle multiple rows - or split images into a separate function
-        return knex('places').leftJoin('spaces','spaces.spaceId','=','places.spaceId').leftJoin('images','images.placeId','=','places.placeId').leftJoin('audio','audio.placeId','=','places.placeId').where({'places.placeId': placeId}).select('spaces.userId','places.placeId','places.spaceId','places.title','places.description','places.exits','places.poi','places.objects','places.authType','places.isRoot','images.src as imgsrc','images.alt','images.externalId as imgexternalId','images.apilink','audio.src as audiosrc','audio.description as audiodescription','audio.name as audioname','audio.externalId as audioexternalid','audio.username as audiousername','audio.externalUrl as audioexternalurl')
+        return knex('places').leftJoin('spaces','spaces.spaceId','=','places.spaceId').leftJoin('images','images.placeId','=','places.placeId').leftJoin('audio','audio.placeId','=','places.placeId').leftJoin('objects','objects.placeId','=','places.placeId').where({'places.placeId': placeId}).select('spaces.userId','places.placeId','places.spaceId','places.title','places.description','places.exits','places.poi','places.objects','places.authType','places.isRoot','images.src as imgsrc','images.alt','images.externalId as imgexternalId','images.apilink','audio.src as audiosrc','audio.description as audiodescription','audio.name as audioname','audio.externalId as audioexternalid','audio.username as audiousername','audio.externalUrl as audioexternalurl','objects.objectId','objects.title as objectTitle','objects.description as objectDescription','objects.actionStack', 'objects.userId as objectUserId')
         .then((rows) => {
             let retVal
             let images = []
             let audio = []
+
             rows.forEach((row,i) => {
                
                 if (i === 0) {
@@ -401,6 +403,17 @@ module.exports = {
                     }
                     audio.push(sound)
                 }
+                if (row.objectId) {
+                    const object = {
+                        objectId: row.objectId,
+                        title: row.objectTitle,
+                        description: row.objectDescription,
+                        actionStack: row.actionStack,
+                        userId: row.objectUserId,
+                        type:'NPC'
+                    }
+                    row.objects.push(object)
+                }
             })
             rows[0].images = images
             rows[0].audio = audio
@@ -424,20 +437,46 @@ module.exports = {
         images=images||[]
         actionStack=actionStack||[]
         auth=auth||[]
-
+        console.log(actionStack)
+        const originalActionStack = actionStack
         console.log(`Create Object ${title}`)
-        if (typeof actionStack === 'object') {
-            if (actionStack.type && actionStack.type == 'NPC') {
-                
+        let objectId
+        if (isRoot === 0) {
+            if (typeof actionStack === 'object') {
+                if (actionStack.type && actionStack.type == 'NPC') {
+                    actionStack = JSON.stringify(actionStack)
+                    auth = JSON.stringify(auth)
+                    console.log('111')
+                    return knex('objects').insert({
+                        userId,placeId,title,description,isRoot,actionStack,auth
+                    }).then(response => {
+                        console.log('222')
+                        objectId = response[0]
+                        handleImages(images,null,null,null,objectId)
+                        console.log('objectId',objectId)
+                        let event = []
+                        event.push({type:'behaviors',useAIBehaviors: originalActionStack.useAIBehaviors,behaviors:originalActionStack.behaviors, inventory:originalActionStack.inventory, faction: originalActionStack.faction, scripts: originalActionStack.scripts})
+                        event = JSON.stringify(event)
+                        const interval = 0
+                        const next = new Date(Date.now()+(10000))
+                        console.log('next',next)
+                        knex('timedevents').insert({
+                            placeId:placeId,objectId:objectId,eventData:event,nextInterval:interval,next:next
+                        }).then(response => response)
+                        console.log('objectId is:')
+                        console.log(objectId)
+                        return response
+                    }).catch(e => console.log(e))
+                }
             }
-        }
+        } else {
             actionStack = JSON.stringify(actionStack)
             auth = JSON.stringify(auth)
-        var objectId = knex('objects').insert({
-            userId,title,description,isRoot,actionStack,auth
-        }).then(response => handleImages(images,null,null,null,response[0]))
-
-        return objectId
+            return knex('objects').insert({
+                userId,title,description,isRoot,actionStack,auth
+            }).then(response => handleImages(images,null,null,null,response[0]))
+        }
+        //return objectId
     },
     updateObject({objectId, placeId, title, description, isRoot, actionStack, images, auth}) {
         placeId=placeId||0
@@ -562,10 +601,12 @@ module.exports = {
         } 
     },
     getPopulation ({placeId}) {
-        //select users.userId, users.userName from population left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),CAST(users.userId as JSON), '$')
+        //select `users`.`userId`, `users`.`userName`,images.src, images.alt from `population` left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),CAST(users.userId as JSON), '$') left join images on images.userId=users.userId where population.placeId=21 UNION select objects.objectId, objects.title, images.src, images.alt from objects left join images on images.objectId = objects.objectId where objects.placeId=21
         const DB = process.env.DB_TYPE || 'mysql'
         const joinRaw = DB === 'MariaDB' ? "left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),users.userId, '$')" : "left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),CAST(users.userId as JSON), '$')"
-        return knex("population").joinRaw(joinRaw).where({placeId: placeId}).select('users.userId','users.userName')
+        return knex("population").joinRaw(joinRaw).leftJoin('images','images.userId','=','users.userId').where("population.placeId","=", placeId).select('users.userId','users.userName','images.src','images.alt').union([
+            knex("objects").leftJoin("images","images.objectId","=","objects.objectId").where("objects.placeId","=", placeId).select('objects.objectId','objects.title','images.src','images.alt')
+        ])
     }
 }
 
