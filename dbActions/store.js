@@ -347,7 +347,6 @@ module.exports = {
 
         objects = objects||[]
         objects = objects.filter(object => object.type !== 'NPC')
-        console.log('objects',objects)
         if (Array.isArray(images))
             handleImages(images,null,null,placeId,null)
 
@@ -612,7 +611,6 @@ module.exports = {
                 knex("objects").leftJoin("images","images.objectId","=","objects.objectId").where("objects.placeId","=", placeId).andWhere({isRoot:0}).select('objects.objectId as userId','objects.title as userName','images.src','images.alt')
             )
             .then(response => {
-                console.log('getPop response', response)
                 return response
             })
     }

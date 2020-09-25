@@ -14,7 +14,8 @@ const trigger = [
     ["hi","hey","hello","greetings","saluations"],
     ["how", "are", "you", "things"],
     ["what","you","your", "name","called"],
-    ["what","is","up","how"]
+    ["what","is","up","how"],
+    ["smile","smiles","grin","grins","laugh","laughs"]
 ]
 
 const reply = [
@@ -38,9 +39,15 @@ const reply = [
     ],
     [
         {type:'ornery',values:[{type:'emote',value:'shrugs.'},{type:'emote',value:'shakes his head.'},{type:'say',value:'Nothing.'}]},
-        {type:'friendly',values:[{type:'say',value:'Pretty good, how about yourself?'},{type:'emote',value:'nods happily'}]},
+        {type:'friendly',values:[{type:'say',value:'Pretty good, how about yourself?'},{type:'emote',value:'nods happily.'}]},
         {type:'street',values:[{type:'say',value:"O.K."},{type:'say',value:"Nothing much."}]},
         {type:'scholar',values:[{type:'emote', value:'points upward.'},{type:'say',value:"I'm not busy at the moment, if that is to what you are referring."}]}
+    ],
+    [
+        {type:'ornery',values:[{type:'emote',value:'shows their teeth.'},{type:'emote',value:'frowns.'},{type:'emote',value:'snorts softly.'}]},
+        {type:'friendly',values:[{type:'say',value:"You have a nice smile."},{type:'emote',value:'smiles back.'}]},
+        {type:'street',values:[{type:'say',value:"Nice."},{type:'emote',value:"grins back."}]},
+        {type:'scholar',values:[{type:'emote', value:'gives a wan smile.'},{type:'say',value:"Well, then."}]}
     ]
 ]
 const countOccurrences = async (arr, val) => arr.reduce((a, v) => (v === val ? a + 1 : a), 0);
