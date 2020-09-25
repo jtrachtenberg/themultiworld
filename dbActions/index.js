@@ -8,7 +8,7 @@ const reactions = require('./reactions');
 const app = express()
 var http = require('http').createServer(app)
 var io = require('socket.io')(http)
-
+console._times.clear()
 app.use(express.static('public'))
 app.use(bodyParser.json())
 

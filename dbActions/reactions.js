@@ -52,7 +52,7 @@ const normalizeText = (text) => {
 
 module.exports = {
     doReaction(data,io) {
-        console.time('doReaction')
+        //console.time('doReaction')
         if (data.exit || data.enter) {
             //console.log('moved')
             return
@@ -60,7 +60,7 @@ module.exports = {
         const msg = data.msg
         const userName = data.userName
         const placeId=data.msgPlaceId
-        knex('objects').where({placeId:placeId}).andWhere({isRoot:0}).select('title','actionStack').then(rows => {
+        knex('objects').leftJoin('places','places.placeId','=','objects.placeId').where('objects.placeId','=',placeId).andWhere('objects.isRoot','=',0).select('objects.title','objects.actionStack','places.poi').then(rows => {
             let text = normalizeText(msg)
             const textArray = text.split(" ")
             rows.forEach(object => {
@@ -142,7 +142,7 @@ module.exports = {
                 }
             })
         })
-        console.timeEnd('doReaction')
+        //console.timeEnd('doReaction')
     }
 
 }
