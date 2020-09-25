@@ -347,7 +347,6 @@ module.exports = {
 
         objects = objects||[]
         objects = objects.filter(object => object.type !== 'NPC')
-        console.log('objects',objects)
         if (Array.isArray(images))
             handleImages(images,null,null,placeId,null)
 
@@ -374,17 +373,16 @@ module.exports = {
         //handle multiple rows - or split images into a separate function
         return knex('places').leftJoin('spaces','spaces.spaceId','=','places.spaceId').leftJoin('images','images.placeId','=','places.placeId').leftJoin('audio','audio.placeId','=','places.placeId').leftJoin('objects','objects.placeId','=','places.placeId').where({'places.placeId': placeId}).select('spaces.userId','places.placeId','places.spaceId','places.title','places.description','places.exits','places.poi','places.objects','places.authType','places.isRoot','images.src as imgsrc','images.alt','images.externalId as imgexternalId','images.apilink','audio.src as audiosrc','audio.description as audiodescription','audio.name as audioname','audio.externalId as audioexternalid','audio.username as audiousername','audio.externalUrl as audioexternalurl','objects.objectId','objects.title as objectTitle','objects.description as objectDescription','objects.actionStack', 'objects.userId as objectUserId')
         .then((rows) => {
-            let retVal
             let images = []
             let audio = []
-
+            let objects = []
             rows.forEach((row,i) => {
-                row.objects = row.objects||[]
-               
+               console.log('row objects:', row.objects)
                 if (i === 0) {
                     retVal = row
+                    objects = row.objects
                 }
-                if (row.alt) {
+                if (row.alt && !images.find(image => image.id === row.imgexternalId)) {
                     const image = {
                         src:row.imgsrc,
                         alt:row.alt,
@@ -393,7 +391,7 @@ module.exports = {
                     }
                     images.push(image)
                 }
-                if (row.audiosrc) {
+                if (row.audiosrc && !audio.find(snd => snd.externalId === row.audioexternalid)) {
                     const sound = {
                         src:row.audiosrc,
                         name:row.audioname,
@@ -404,7 +402,7 @@ module.exports = {
                     }
                     audio.push(sound)
                 }
-                if (row.objectId) {
+                if (row.objectId && !objects.find(object => object.objectId === row.objectId)) {
                     const object = {
                         objectId: row.objectId,
                         title: row.objectTitle,
@@ -413,11 +411,13 @@ module.exports = {
                         userId: row.objectUserId,
                         type:'NPC'
                     }
-                    row.objects.push(object)
+                    objects.push(object)
                 }
             })
+            console.log('objects:', objects)
             rows[0].images = images
             rows[0].audio = audio
+            rows[0].objects = objects
             return rows
         })
         .catch((err) => {
@@ -602,12 +602,17 @@ module.exports = {
         } 
     },
     getPopulation ({placeId}) {
-        //select `users`.`userId`, `users`.`userName`,images.src, images.alt from `population` left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),CAST(users.userId as JSON), '$') left join images on images.userId=users.userId where population.placeId=21 UNION select objects.objectId, objects.title, images.src, images.alt from objects left join images on images.objectId = objects.objectId where objects.placeId=21
+        //select `users`.`userId`, `users`.`userName`,images.src, images.alt from `population` left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),CAST(users.userId as JSON), '$') left join images on images.userId=users.userId where population.placeId=21 UNION
+        // select objects.objectId, objects.title, images.src, images.alt from objects left join images on images.objectId = objects.objectId where objects.placeId=21
         const DB = process.env.DB_TYPE || 'mysql'
         const joinRaw = DB === 'MariaDB' ? "left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),users.userId, '$')" : "left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),CAST(users.userId as JSON), '$')"
-        return knex("population").joinRaw(joinRaw).leftJoin('images','images.userId','=','users.userId').where("population.placeId","=", placeId).select('users.userId','users.userName','images.src','images.alt').union([
-            knex("objects").leftJoin("images","images.objectId","=","objects.objectId").where("objects.placeId","=", placeId).select('objects.objectId','objects.title','images.src','images.alt')
-        ])
+        return knex("population").joinRaw(joinRaw).leftJoin('images','images.userId','=','users.userId').where("population.placeId","=", placeId).select('users.userId','users.userName','images.src','images.alt').union(
+            
+                knex("objects").leftJoin("images","images.objectId","=","objects.objectId").where("objects.placeId","=", placeId).andWhere({isRoot:0}).select('objects.objectId as userId','objects.title as userName','images.src','images.alt')
+            )
+            .then(response => {
+                return response
+            })
     }
 }
 

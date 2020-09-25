@@ -61,7 +61,8 @@ module.exports = {
         return mod + Math.floor(Math.random()*max)
     },
     async didItHappen({max, min}) {
-        return (1 + Math.floor(Math.random()*max))<min
+        let rnd = 1+Math.floor(Math.random()*Number(max))
+        return rnd<min
     },
     async findPath({startPlaceId, endPlaceId}) {
         //select p2.placeId,p2.title,p2.spaceId, p2.exits from places p1 join places p2 on p1.spaceId=p2.spaceId where p1.spaceId=p2.spaceId AND p1.placeId in (18,42)
