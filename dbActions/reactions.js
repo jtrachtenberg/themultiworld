@@ -13,7 +13,8 @@ function weightedRandom(prob) {
 const trigger = [
     ["hi","hey","hello","greetings","saluations"],
     ["how", "are", "you", "things"],
-    ["what","you","your", "name","called"]
+    ["what","you","your", "name","called"],
+    ["what","is","up","how"]
 ]
 
 const reply = [
@@ -34,6 +35,12 @@ const reply = [
         {type:'friendly',values:[{type:'say',value:'My name is /name/.'},{type:'emote',value:'smiles and tells you their name.'}]},
         {type:'street',values:[{type:'say',value:"I'm /name/."},{type:'say',value:"/name/"}]},
         {type:'scholar',values:[{type:'emote', value:'gestures to the "people nearby" list with a knowing smile.'},{type:'say',value:'I am called /name/.'}]}
+    ],
+    [
+        {type:'ornery',values:[{type:'emote',value:'shrugs.'},{type:'emote',value:'shakes his head.'},{type:'say',value:'Nothing.'}]},
+        {type:'friendly',values:[{type:'say',value:'Pretty good, how about yourself?'},{type:'emote',value:'nods happily'}]},
+        {type:'street',values:[{type:'say',value:"O.K."},{type:'say',value:"Nothing much."}]},
+        {type:'scholar',values:[{type:'emote', value:'points upward.'},{type:'say',value:"I'm not busy at the moment, if that is to what you are referring."}]}
     ]
 ]
 const countOccurrences = async (arr, val) => arr.reduce((a, v) => (v === val ? a + 1 : a), 0);

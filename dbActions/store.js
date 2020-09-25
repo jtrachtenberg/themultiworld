@@ -374,7 +374,6 @@ module.exports = {
         //handle multiple rows - or split images into a separate function
         return knex('places').leftJoin('spaces','spaces.spaceId','=','places.spaceId').leftJoin('images','images.placeId','=','places.placeId').leftJoin('audio','audio.placeId','=','places.placeId').leftJoin('objects','objects.placeId','=','places.placeId').where({'places.placeId': placeId}).select('spaces.userId','places.placeId','places.spaceId','places.title','places.description','places.exits','places.poi','places.objects','places.authType','places.isRoot','images.src as imgsrc','images.alt','images.externalId as imgexternalId','images.apilink','audio.src as audiosrc','audio.description as audiodescription','audio.name as audioname','audio.externalId as audioexternalid','audio.username as audiousername','audio.externalUrl as audioexternalurl','objects.objectId','objects.title as objectTitle','objects.description as objectDescription','objects.actionStack', 'objects.userId as objectUserId')
         .then((rows) => {
-            let retVal
             let images = []
             let audio = []
             let objects = []
@@ -609,10 +608,11 @@ module.exports = {
         const DB = process.env.DB_TYPE || 'mysql'
         const joinRaw = DB === 'MariaDB' ? "left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),users.userId, '$')" : "left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),CAST(users.userId as JSON), '$')"
         return knex("population").joinRaw(joinRaw).leftJoin('images','images.userId','=','users.userId').where("population.placeId","=", placeId).select('users.userId','users.userName','images.src','images.alt').union(
-            [
-            knex("objects").leftJoin("images","images.objectId","=","objects.objectId").where("objects.placeId","=", placeId).select('objects.objectId','objects.title','images.src','images.alt')
-            ])
+            
+                knex("objects").leftJoin("images","images.objectId","=","objects.objectId").where("objects.placeId","=", placeId).andWhere({isRoot:0}).select('objects.objectId as userId','objects.title as userName','images.src','images.alt')
+            )
             .then(response => {
+                console.log('getPop response', response)
                 return response
             })
     }
