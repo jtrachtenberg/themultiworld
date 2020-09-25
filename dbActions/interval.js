@@ -5,6 +5,31 @@ var pos= require('pos');
 const utilFunctions = require('./utilFunctions');
 
 module.exports = {
+    cleanUp() {
+        knex('population').select().then((rows) => {
+            rows.forEach(async (row)=> {
+                const populationId = row.populationId
+                const people = row.people
+                const remove = []
+                const retVal = await people.map(async (userId) => {
+                    await knex("users").where({userId:userId}).first('updated_at').then(async (row) => {
+                        const updated_at = new Date(row.updated_at)
+                        const now = new Date()
+                        const seconds = (now-updated_at)/1000
+                        console.log('seconds:', seconds)
+                        if (seconds > 86400) {//24 hours since update
+                            await remove.push(userId)
+                            return remove
+                        }
+                    })
+                })
+                Promise.all(retVal).then(values => {
+                    const newPeople = people.filter(userId => !remove.find(d => d === userId))
+                    knex('population').where({populationId:populationId}).update({people:JSON.stringify(newPeople)}).then(result => result)
+                })
+             })
+        })
+    },
     checkTimedEvents(io) {
         const data = {msg: 'Ghost message', msgPlaceId: 18, userName: ""}
         //io.emit(`place:18`,{msg: data})
@@ -16,7 +41,7 @@ module.exports = {
         
     },
     worldTick(io) {
-        console.time('worldTick')
+        //console.time('worldTick')
         knex('timedevents').leftJoin('places','places.placeId','=','timedevents.placeId').leftJoin('objects','objects.objectId','=','timedevents.objectId').where({nextInterval:0}).select('timedevents.userId','timedevents.spaceId','timedevents.placeId','timedevents.objectId','eventData','places.exits','places.objects','objects.title as name').then(rows => {
             rows.forEach(row => {
                 if (typeof row.exits === 'string') row.exits = JSON.parse(row.exits.replace(/\\/g,""))
@@ -42,6 +67,6 @@ module.exports = {
                 })
             })
         })
-        console.timeEnd('worldTick')
+        //console.timeEnd('worldTick')
     }
 }
