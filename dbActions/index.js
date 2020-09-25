@@ -284,7 +284,7 @@ io.on('connection', (socket) => {
 
 var server = http.listen(8880, () => {
     console.log('Server running on localhost:8880')
-    //const intervalObjWorldTick = setInterval(interval.worldTick,10000,io)
+    const intervalObjWorldTick = setInterval(interval.worldTick,10000,io)
     const intervalObjCleanUp = setInterval(interval.cleanUp,3600000)
 
 })
