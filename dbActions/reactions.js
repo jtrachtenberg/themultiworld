@@ -14,8 +14,11 @@ const trigger = [
     ["hi","hey","hello","greetings","saluations"],
     ["how", "are", "you", "things"],
     ["what","you","your", "name","called"],
-    ["what","is","up","how"],
-    ["smile","smiles","grin","grins","laugh","laughs"]
+    ["what","is","up",],
+    ["smile","smiles","grin","grins","laugh","laughs"],
+    ["fine","good","pretty","ok","fantastic","peachy"],
+    ["bad","terrible","horrible","horrific","sad","saddened","saddens","lonely"]
+
 ]
 
 const reply = [
@@ -39,8 +42,8 @@ const reply = [
     ],
     [
         {type:'ornery',values:[{type:'emote',value:'shrugs.'},{type:'emote',value:'shakes his head.'},{type:'say',value:'Nothing.'}]},
-        {type:'friendly',values:[{type:'say',value:'Pretty good, how about yourself?'},{type:'emote',value:'nods happily.'}]},
-        {type:'street',values:[{type:'say',value:"O.K."},{type:'say',value:"Nothing much."}]},
+        {type:'friendly',values:[{type:'say',value:'This and that, how about yourself?'},{type:'emote',value:'nods happily.'}]},
+        {type:'street',values:[{type:'say',value:"Not much."},{type:'say',value:"Nothing much."}]},
         {type:'scholar',values:[{type:'emote', value:'points upward.'},{type:'say',value:"I'm not busy at the moment, if that is to what you are referring."}]}
     ],
     [
@@ -48,7 +51,21 @@ const reply = [
         {type:'friendly',values:[{type:'say',value:"You have a nice smile."},{type:'emote',value:'smiles back.'}]},
         {type:'street',values:[{type:'say',value:"Nice."},{type:'emote',value:"grins back."}]},
         {type:'scholar',values:[{type:'emote', value:'gives a wan smile.'},{type:'say',value:"Well, then."}]}
+    ],
+    [
+    {type:'ornery',values:[{type:'emote',value:'sniffs indignantly.'},{type:'emote',value:'is irritated.'},{type:'emote',value:'is done with you.'}]},
+    {type:'friendly',values:[{type:'say',value:"That's great!"},{type:'emote',value:'does a happy dance.'}]},
+    {type:'street',values:[{type:'say',value:"Good."},{type:'emote',value:"throws a peace sign."}]},
+    {type:'scholar',values:[{type:'emote', value:'nods in acknowledgement.'},{type:'say',value:"Excellent."}]}
+    ],
+    [
+    {type:'ornery',values:[{type:'emote',value:'hides a self satisfied smile.'},{type:'emote',value:'raises their eyebrows.'},{type:'emote',value:'shrugs dismissively.'}]},
+    {type:'friendly',values:[{type:'say',value:"Oh no, I'm sorry."},{type:'emote',value:'gives a hug.'}]},
+    {type:'street',values:[{type:'say',value:"It happens."},{type:'emote',value:"grimaces."}]},
+    {type:'scholar',values:[{type:'emote', value:'has often felt the same.'},{type:'say',value:"I understand."}]}
+
     ]
+
 ]
 const countOccurrences = async (arr, val) => arr.reduce((a, v) => (v === val ? a + 1 : a), 0);
 
