@@ -16,7 +16,6 @@ module.exports = {
                         const updated_at = new Date(row.updated_at)
                         const now = new Date()
                         const seconds = (now-updated_at)/1000
-                        console.log('seconds:', seconds)
                         if (seconds > 86400) {//24 hours since update
                             await remove.push(userId)
                             return remove

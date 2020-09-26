@@ -377,7 +377,6 @@ module.exports = {
             let audio = []
             let objects = []
             rows.forEach((row,i) => {
-               console.log('row objects:', row.objects)
                 if (i === 0) {
                     retVal = row
                     objects = row.objects === null ? [] : row.objects
@@ -414,7 +413,6 @@ module.exports = {
                     objects.push(object)
                 }
             })
-            console.log('objects:', objects)
             rows[0].images = images
             rows[0].audio = audio
             rows[0].objects = objects
@@ -438,7 +436,6 @@ module.exports = {
         images=images||[]
         actionStack=actionStack||[]
         auth=auth||[]
-        console.log(actionStack)
         const originalActionStack = actionStack
         console.log(`Create Object ${title}`)
         let objectId
@@ -447,25 +444,19 @@ module.exports = {
                 if (actionStack.type && actionStack.type == 'NPC') {
                     actionStack = JSON.stringify(actionStack)
                     auth = JSON.stringify(auth)
-                    console.log('111')
                     return knex('objects').insert({
                         userId,placeId,title,description,isRoot,actionStack,auth
                     }).then(response => {
-                        console.log('222')
                         objectId = response[0]
                         handleImages(images,null,null,null,objectId)
-                        console.log('objectId',objectId)
                         let event = []
                         event.push({type:'behaviors',useAIBehaviors: originalActionStack.useAIBehaviors,behaviors:originalActionStack.behaviors, inventory:originalActionStack.inventory, faction: originalActionStack.faction, scripts: originalActionStack.scripts})
                         event = JSON.stringify(event)
                         const interval = 0
                         const next = new Date(Date.now()+(10000))
-                        console.log('next',next)
                         knex('timedevents').insert({
                             placeId:placeId,objectId:objectId,eventData:event,nextInterval:interval,next:next
                         }).then(response => response)
-                        console.log('objectId is:')
-                        console.log(objectId)
                         return response
                     }).catch(e => console.log(e))
                 }
@@ -615,33 +606,3 @@ module.exports = {
             })
     }
 }
-
-
-/*
-  /*if (email !== null && email !== '')
-            retUserCheck = knex('users').where({email: email}).on('query-response', (response, obj, builder) => {
-                retUser = obj.response[0]
-                salt = retUser.salt
-                console.log(`salt is ${salt}`)
-                hash = crypto.pbkdf2Sync(password,  
-                    salt, 1000, 64, `sha512`).toString(`hex`)
-                if (hash !== retUser.password)
-                    retUser = null
-            })
-        else
-            retUserCheck = knex('users').where({userName: userName}).on('query-response', (response, obj, builder) => {
-                var retUserResp = obj.response[0]
-                var jstring=JSON.stringify(retUserResp);
-                var ju = JSON.parse(jstring)
-                salt = ju[0].salt
-                console.log(`salt is ${salt}`)
-                hash = crypto.pbkdf2Sync(password,  
-                    salt, 1000, 64, `sha512`).toString(`hex`)
-                console.log(`hash is ${hash}`)
-                console.log(`given hash is ${ju[0].password}`)
-                if (hash === ju[0].password)
-                    retUser = obj.response[0]
-                else    
-                    retUser = null
-            })
-        */
