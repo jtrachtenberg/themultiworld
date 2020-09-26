@@ -218,8 +218,10 @@ io.on('connection', (socket) => {
     console.log('user connected')
     if (typeof users[socket.id] !== 'undefined') store.repopulate({userId: users[socket.id]})
     socket.on("incoming data", (data)=>{
+        //console.log(data)
         //the order is important here
-        const type = typeof(data.type) !== 'undefined' ? data.type : typeof(data.stateData) === 'object' ? 'userStateData' : data.objectId ? 'object' : data.placeId ? 'place' : data.spaceId ? 'space' : data.userId ? 'user' : 'msg'
+        const type = typeof(data.type) !== 'undefined' ? data.type : data.placeId ? 'place' : typeof(data.stateData) === 'object' ? 'userStateData' : data.objectId ? 'object' : data.spaceId ? 'space' : data.userId ? 'user' : 'msg'
+        console.log('type: ',type)
         //Here we broadcast it out to all other sockets EXCLUDING the socket which sent us the data
        if (type === 'search') {
            store.search({search: data.search, term: data.term}).then(response => {
