@@ -380,7 +380,7 @@ module.exports = {
                console.log('row objects:', row.objects)
                 if (i === 0) {
                     retVal = row
-                    objects = row.objects
+                    objects = row.objects === null ? [] : row.objects
                 }
                 if (row.alt && !images.find(image => image.id === row.imgexternalId)) {
                     const image = {
