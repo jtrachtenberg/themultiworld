@@ -597,12 +597,9 @@ module.exports = {
         // select objects.objectId, objects.title, images.src, images.alt from objects left join images on images.objectId = objects.objectId where objects.placeId=21
         const DB = process.env.DB_TYPE || 'mysql'
         const joinRaw = DB === 'MariaDB' ? "left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),users.userId, '$')" : "left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),CAST(users.userId as JSON), '$')"
-        return knex("population").joinRaw(joinRaw).leftJoin('images','images.userId','=','users.userId').where("population.placeId","=", placeId).select('users.userId','users.userName','images.src','images.alt').union(
+        return knex("population").joinRaw(joinRaw).leftJoin('images','images.userId','=','users.userId').andWhereNot('users.userId','NULL').where("population.placeId","=", placeId).select('users.userId','users.userName','images.src','images.alt').union(
             
                 knex("objects").leftJoin("images","images.objectId","=","objects.objectId").where("objects.placeId","=", placeId).andWhere({isRoot:0}).select('objects.objectId as userId','objects.title as userName','images.src','images.alt')
             )
-            .then(response => {
-                return response
-            })
     }
 }
