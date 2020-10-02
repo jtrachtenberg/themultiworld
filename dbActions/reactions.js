@@ -81,6 +81,28 @@ const normalizeText = (text) => {
     return text
 }
 
+const checkObjectText = async (reactionStack, textArray) => {
+
+    const retObject = {
+        text: "",
+        type: "emote",
+    }
+
+    let found = false
+    const findReactions = await reactionStack.map( reaction => {
+        console.log(reaction)
+        const checkText = reaction.commandAction
+        const foundIndex = textArray.indexOf(checkText)
+        if (foundIndex !== -1) {
+            retObject.text = reaction.elementList[0].commandResult
+            found = true
+            return true
+        }
+        return false
+    })
+    return Promise.all(findReactions).then(response => {console.log(retObject);return new Promise(resolve => resolve(found ? retObject : null))})
+}
+
 module.exports = {
     doReaction(data,io) {
         //console.time('doReaction')
@@ -107,6 +129,28 @@ module.exports = {
                     
                     utilFunctions.didItHappen({max:20,min:friend}).then( async (willReply) => {
                         if (willReply || nameFound) {
+
+                           await checkObjectText(object.actionStack.reactionStack, textArray).then( async (uniqueResponse) => {
+                            console.log('ur: ', uniqueResponse)
+                            if (uniqueResponse !== null && typeof (uniqueResponse) === 'object') {
+                                const finalResponse = uniqueResponse.text
+                                console.log('rF: ', finalResponse)
+                                let channel = `place:${placeId}`
+                                const data = {msg: finalResponse.replace('/name/',object.title), msgPlaceId: placeId, userName: name, src: 'NPC'}
+                                switch (uniqueResponse.type) {
+                                    case 'emote' :  
+                                        data.emote = true
+                                        io.emit(channel, {msg: data})
+                                        break;
+                                    case 'say'   :                                                
+                                        io.emit(channel, {msg: data})
+                                        break;
+                                    default      : break;
+                                }
+
+                                return
+                            } else {
+
                             const foundWords = []
                             const triggerIndex = textArray.map( (word,i) => trigger.map( (triggerWords,j) => {
                                 const foundIndex = triggerWords.indexOf(word)
@@ -167,13 +211,15 @@ module.exports = {
                                         }
                                     })
                                 })
-                            }
+                                
+                            }}})
                         }
                     })
                 }
             })
         })
         //console.timeEnd('doReaction')
+        return
     }
 
 }
