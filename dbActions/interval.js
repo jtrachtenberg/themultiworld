@@ -58,8 +58,12 @@ module.exports = {
                                     //This must be async to avoid race conditions
                                     await utilFunctions.moveObjectToPlace({oldPlaceId: row.placeId, newPlaceId: newPlaceId, objectId: row.objectId, type: eventData.type, name: row.name, io: io}).then(response => response)
                                 })
-                            } else {
-                                //console.log('will not move')
+                            } else { //Not moving, see if it's time to try something else
+                                utilFunctions.didItHappen({max: 20, min: behaviors.strength}).then(response => {
+                                    if (response) {
+                                        
+                                    }
+                                })
                             }
                         })
                     }

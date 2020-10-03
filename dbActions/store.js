@@ -335,6 +335,18 @@ module.exports = {
         }
         return retVal
     },
+    deleteNPC({elements}) {
+        const objectId = elements.objectId
+        const userId = elements.userId
+        const placeId = elements.placeId
+        return knex('objects').leftJoin('users as u2','u2.userId','=',userId).leftJoin('places','places.placeId','=',placeId).leftJoin('spaces','spaces.spaceId','=','places.spaceId').where({objectId:objectId}).first('u2.isRoot','objects.userId as objectsUserId','spaces.userId as placesUserId').then (row => {
+            if (row.isRoot || row.placesUserId === userId || row.objectsUserId === userId) {
+                return knex('timedevents').where({objectId:objectId}).delete().then(response => {
+                    return knex('objects').where({objectId:objectId}).delete()
+                })
+            } else return new Promise(resolve => resolve('Unauthorized'))
+        })
+    },
     updatePlace({spaceId,placeId,title,description,isRoot,exits,poi,objects,images,audio, authType}) {
         exits = exits||[]
         exits = JSON.stringify(exits)
@@ -551,7 +563,9 @@ module.exports = {
             return Promise.all(queries).then(trx.commit).catch(trx.rollback)
         })
     },
-    getAdminPopulation({userId}) {
+    getAdminPopulation({elements}) {
+        const userId = elements.userId
+        console.log('userId: ',userId)
         //select placeId, people from population where people NOT LIKE '%[]%'
         const DB = process.env.DB_TYPE || 'mysql'
         const joinRaw = DB === 'MariaDB' ? "left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),users.userId, '$')" : "left join users on JSON_CONTAINS(JSON_EXTRACT(people,'$'),CAST(users.userId as JSON), '$')"
