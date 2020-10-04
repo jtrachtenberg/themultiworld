@@ -148,7 +148,7 @@ module.exports = {
                             if (uniqueResponse !== null && typeof (uniqueResponse) === 'object') {
                                 const finalResponse = uniqueResponse.text
                                 let channel = `place:${placeId}`
-                                const data = {msg: finalResponse.replace('/name/',object.title), msgPlaceId: placeId, userName: name, src: 'NPC'}
+                                const data = {msg: finalResponse.replace('/name/',object.title).replace('npcName',object.title).replace('userName',userName), msgPlaceId: placeId, userName: name, src: 'NPC'}
                                 switch (uniqueResponse.type) {
                                     case 'emote' :  
                                         data.emote = true
@@ -208,7 +208,7 @@ module.exports = {
                                         utilFunctions.diceRoll({max:responseValues.values.length, mod:1}).then (item => {
                                             const finalResponse = responseValues.values[item-1]
                                             let channel = `place:${placeId}`
-                                            const data = {msg: finalResponse.value.replace('/name/',object.title), msgPlaceId: placeId, userName: name, src: 'NPC'}
+                                            const data = {msg: finalResponse.value.replace('/name/',object.title).replace('npcName',object.title).replace('userName',userName), msgPlaceId: placeId, userName: name, src: 'NPC'}
                                             switch (finalResponse.type) {
                                                 case 'emote' :  
                                                     data.emote = true
