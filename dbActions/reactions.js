@@ -16,7 +16,7 @@ const trigger = [
     ["what","you","your", "name","called"],
     ["what","is","up",],
     ["smile","smiles","grin","grins","laugh","laughs"],
-    ["fine","good","pretty","ok","fantastic","peachy"],
+    ["fine","good","pretty","ok","fantastic","peachy","happy"],
     ["bad","terrible","horrible","horrific","sad","saddened","saddens","lonely"]
 
 ]
@@ -81,13 +81,49 @@ const normalizeText = (text) => {
     return text
 }
 
+const checkObjectText = async (reactionStack, textArray) => {
+
+    const retObject = {
+        text: "",
+        type: "emote",
+    }
+
+    const triggerArray = reactionStack.map(reaction => reaction.commandAction.split(" "))
+    const replyArray = reactionStack.map(reaction => reaction.elementList.map(element => element.commandResult))
+
+    const foundWords = []
+    const triggerIndex = textArray.map( (word,i) => triggerArray.map( (triggerWords,j) => {
+        const foundIndex = triggerWords.indexOf(word)
+        if (foundIndex !== -1) foundWords.push(j)
+        return {i:i,j:j,index:foundIndex}
+    }))
+    let highIndexMap
+    let highIndexCheck=-1
+    let highIndex
+    if (foundWords.length > 0) {
+        let uniqueIndex = [...new Set(foundWords)];
+        highIndexMap = await uniqueIndex.map( async (index) => {
+            await countOccurrences(foundWords,index).then(occurrences => {
+                if (occurrences > highIndexCheck) {
+                    highIndexCheck = occurrences
+                    highIndex = index                                            
+                }
+                return new Promise(resolve => resolve(highIndex))
+            })
+        })
+    } else return null
+    return Promise.all(highIndexMap).then(value => {
+        const responseArray = replyArray[highIndex]
+        const finalResponse = responseArray.join(" ")
+        retObject.text=finalResponse
+        return new Promise(resolve => resolve(retObject))
+    })
+}
+
 module.exports = {
     doReaction(data,io) {
         //console.time('doReaction')
-        if (data.exit || data.enter) {
-            //console.log('moved')
-            return
-        }
+        if (data.exit || data.enter) return //enter/exit room message
         const msg = data.msg
         const userName = data.userName
         const placeId=data.msgPlaceId
@@ -107,73 +143,93 @@ module.exports = {
                     
                     utilFunctions.didItHappen({max:20,min:friend}).then( async (willReply) => {
                         if (willReply || nameFound) {
-                            const foundWords = []
-                            const triggerIndex = textArray.map( (word,i) => trigger.map( (triggerWords,j) => {
-                                const foundIndex = triggerWords.indexOf(word)
-                                if (foundIndex !== -1) foundWords.push(j)
-                                return {i:i,j:j,index:foundIndex}
-                            }))
-                            if (foundWords.length > 0) {
-                                let uniqueIndex = [...new Set(foundWords)];
-                                let highIndexCheck=-1
-                                let highIndex
-                                const highIndexMap = await uniqueIndex.map( async (index) => {
-                                    await countOccurrences(foundWords,index).then(occurrences => {
-                                        if (occurrences > highIndexCheck) {
-                                            highIndexCheck = occurrences
-                                            highIndex = index                                            
-                                        }
-                                        return highIndex
+
+                           await checkObjectText(object.actionStack.reactionStack, textArray).then( async (uniqueResponse) => {
+                            if (uniqueResponse !== null && typeof (uniqueResponse) === 'object') {
+                                const finalResponse = uniqueResponse.text
+                                let channel = `place:${placeId}`
+                                const data = {msg: finalResponse.replace('/name/',object.title).replace('npcName',object.title).replace('userName',userName), msgPlaceId: placeId, userName: name, src: 'NPC'}
+                                switch (uniqueResponse.type) {
+                                    case 'emote' :  
+                                        data.emote = true
+                                        io.emit(channel, {msg: data})
+                                        break;
+                                    case 'say'   :                                                
+                                        io.emit(channel, {msg: data})
+                                        break;
+                                    default      : break;
+                                }
+                                return
+                            } else {
+                                const foundWords = []
+                                const triggerIndex = textArray.map( (word,i) => trigger.map( (triggerWords,j) => {
+                                    const foundIndex = triggerWords.indexOf(word)
+                                    if (foundIndex !== -1) foundWords.push(j)
+                                    return {i:i,j:j,index:foundIndex}
+                                }))
+                                if (foundWords.length > 0) {
+                                    let uniqueIndex = [...new Set(foundWords)];
+                                    let highIndexCheck=-1
+                                    let highIndex
+                                    const highIndexMap = await uniqueIndex.map( async (index) => {
+                                        await countOccurrences(foundWords,index).then(occurrences => {
+                                            if (occurrences > highIndexCheck) {
+                                                highIndexCheck = occurrences
+                                                highIndex = index                                            
+                                            }
+                                            return highIndex
+                                        })
+                                    
                                     })
-                                 
-                                })
-                                Promise.all(highIndexMap).then(value => {
-                                    const responseArray = reply[highIndex]
-                                    let friendChance=Math.abs(10-friend)/20
-                                    let intelChance=Math.abs(10-intel)/20
-                                    let diff = 1 - (friendChance+intelChance)
-                                    friendChance += diff/2
-                                    intelChance += diff/2
-                                    let prob = {0:friendChance,1:intelChance}
-                                    let chanceResult = weightedRandom(prob)
-                                    let responseType
-                                    if (chanceResult === 0) {
-                                        let orneryChance = Math.abs(20-friend)/20
-                                        let friendlyChance = 1-orneryChance
-                                        prob = {0:orneryChance,1:friendlyChance}
-                                        chanceResult = weightedRandom(prob)
-                                        responseType = (chanceResult === 0) ? 'ornery' : 'friendly'
-                                    } else {
-                                        let streetChance = Math.abs(20-intel)/20
-                                        let scholarChance = 1-streetChance
-                                        prob = {0:streetChance,1:scholarChance}
-                                        chanceResult = weightedRandom(prob)
-                                        responseType = (chanceResult === 0) ? 'street' : 'scholar'
-                                    }
-                                    const responseValues = responseArray.find(a => a.type === responseType)
-                                    utilFunctions.diceRoll({max:responseValues.values.length, mod:1}).then (item => {
-                                        const finalResponse = responseValues.values[item-1]
-                                        let channel = `place:${placeId}`
-                                        const data = {msg: finalResponse.value.replace('/name/',object.title), msgPlaceId: placeId, userName: name, src: 'NPC'}
-                                        switch (finalResponse.type) {
-                                            case 'emote' :  
-                                                data.emote = true
-                                                io.emit(channel, {msg: data})
-                                                break;
-                                            case 'say'   :                                                
-                                                io.emit(channel, {msg: data})
-                                                break;
-                                            default      : break;
+                                    Promise.all(highIndexMap).then(value => {
+                                        const responseArray = reply[highIndex]
+                                        let friendChance=Math.abs(10-friend)/20
+                                        let intelChance=Math.abs(10-intel)/20
+                                        let diff = 1 - (friendChance+intelChance)
+                                        friendChance += diff/2
+                                        intelChance += diff/2
+                                        let prob = {0:friendChance,1:intelChance}
+                                        let chanceResult = weightedRandom(prob)
+                                        let responseType
+                                        if (chanceResult === 0) {
+                                            let orneryChance = Math.abs(20-friend)/20
+                                            let friendlyChance = 1-orneryChance
+                                            prob = {0:orneryChance,1:friendlyChance}
+                                            chanceResult = weightedRandom(prob)
+                                            responseType = (chanceResult === 0) ? 'ornery' : 'friendly'
+                                        } else {
+                                            let streetChance = Math.abs(20-intel)/20
+                                            let scholarChance = 1-streetChance
+                                            prob = {0:streetChance,1:scholarChance}
+                                            chanceResult = weightedRandom(prob)
+                                            responseType = (chanceResult === 0) ? 'street' : 'scholar'
                                         }
+                                        const responseValues = responseArray.find(a => a.type === responseType)
+                                        utilFunctions.diceRoll({max:responseValues.values.length, mod:1}).then (item => {
+                                            const finalResponse = responseValues.values[item-1]
+                                            let channel = `place:${placeId}`
+                                            const data = {msg: finalResponse.value.replace('/name/',object.title).replace('npcName',object.title).replace('userName',userName), msgPlaceId: placeId, userName: name, src: 'NPC'}
+                                            switch (finalResponse.type) {
+                                                case 'emote' :  
+                                                    data.emote = true
+                                                    io.emit(channel, {msg: data})
+                                                    break;
+                                                case 'say'   :                                                
+                                                    io.emit(channel, {msg: data})
+                                                    break;
+                                                default      : break;
+                                            }
+                                        })
                                     })
-                                })
-                            }
+                                    
+                            }}})
                         }
                     })
                 }
             })
         })
         //console.timeEnd('doReaction')
+        return
     }
 
 }

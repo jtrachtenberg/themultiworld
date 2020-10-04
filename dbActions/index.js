@@ -221,7 +221,6 @@ io.on('connection', (socket) => {
         //console.log(data)
         //the order is important here
         const type = typeof(data.type) !== 'undefined' ? data.type : data.placeId ? 'place' : typeof(data.stateData) === 'object' ? 'userStateData' : data.objectId ? 'object' : data.spaceId ? 'space' : data.userId ? 'user' : 'msg'
-        console.log('type: ',type)
         //Here we broadcast it out to all other sockets EXCLUDING the socket which sent us the data
        if (type === 'search') {
            store.search({search: data.search, term: data.term}).then(response => {
@@ -230,10 +229,17 @@ io.on('connection', (socket) => {
             socket.emit(channel, retObj)
            })
        } else if (type === 'admin') {
-           store[data.cmd]({userId: data.userId}).then(response => {
-               const retObj = {type:'admin',admincmd:data.admincmd,cmd:data.cmd,response:response}
-               const channel = `auth:${data.userId}`
-               socket.emit(channel, retObj)
+           store[data.cmd]({elements: data.elements}).then(response => {
+               if (data.needResponse) {
+                const retObj = {type:'admin',admincmd:data.admincmd,cmd:data.cmd,response:response}
+                const channel = `auth:${data.elements.userId}`
+                socket.emit(channel, retObj)
+               }
+               if (data.needReload) {
+                   const retObj = {place:{placeId:data.elements.placeId},update:'reload'}
+                   const channel = `auth:${data.elements.userId}`
+                   socket.emit(channel, retObj)
+               }
            })
        }
        else if (type === 'auth') {
