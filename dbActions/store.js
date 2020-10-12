@@ -191,8 +191,14 @@ module.exports = {
     getScripts({userId}) {
         return knex('npcScript').where({userId: userId}).select('scriptId','name','script')
     },
-    updateUser({userId,userName,email,description,isRoot}) {
+    updateUser({userId,userName,email,description,isRoot,images}) {
         console.log(`update user ${userId} with email ${email}`)
+
+        images = images||[]
+
+        if (Array.isArray(images))
+            handleImages(images,userId,null,null,null)
+
         return knex('users').where({userId: userId}).update({
             userName: userName,
             email: email,

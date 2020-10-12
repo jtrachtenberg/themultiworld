@@ -38,7 +38,8 @@ app.post('/updateUser', auth, (req, res) => {
             userName: req.body.userName,
             email: req.body.email,
             description: req.body.description,
-            isRoot: req.body.isRoot
+            isRoot: req.body.isRoot,
+            images: req.body.images
         })
         .then((userId) => res.status(200).json(userId))
 })
